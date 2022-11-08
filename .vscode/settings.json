@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "iosfwd": "cpp",
+        "vector": "cpp",
+        "fstream": "cpp",
+        "stdexcept": "cpp",
+        "ostream": "cpp",
+        "iostream": "cpp",
+        "chrono": "cpp"
+    }
+}
