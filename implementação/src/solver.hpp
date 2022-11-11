@@ -17,14 +17,12 @@ using namespace std::chrono;
 #define PRINT_MATRIX true
 
 void readProblem(string fileName);
-/* Initializes the structures, vectors and matrices used */
 void initialization();
-/* Terminates all data structures */
 void termination();
 
-void fillStartMagazine(vector<int>& magazine, int machineIndex, unsigned int *actualTool, unsigned int *actualJob, unsigned int jobCount);
-void KTNS(vector<int>& magazine, vector<int>& toolsNeededSoonest, int machineIndex, unsigned int actualJob, unsigned int jobCount);
-int toolsDistance (int machineIndex, int actualTool, int actualJob, unsigned int jobCount);
+void fillStartMagazine(int machineIndex);
+void KTNS(int machineIndex, int currentJob);
+int toolsDistance (int machineIndex, int currentJob, int currentTool);
 int toolSwitchesEvaluation(int machineIndex);
 int flowtimeEvaluation(int machineIndex);
 int makespanEvaluation(int machineIndex);
@@ -38,27 +36,29 @@ void printMatrix(vector<vector<int>> matrix);
 void printSolution(double runningTime, int run);
 
 int machines, tools, jobs; /* quantity of machines, tools and jobs */
+unsigned int fillJob, fillTool, switchCount, jobCount;
 vector<vector<vector<int>>> npmJobSequency; /* current jobs and tools assigned to each machine */
 vector<vector<int>> toolsAndJobs; /* all tools and jobs */
 vector<vector<int>> npmJobTime; /* time cost of each job on each machine */
+vector<vector<int>> npmCurrentMagazines; /* current magazines of each machine */
+vector<vector<int>> npmToolsNeededSoonest; /* current magazines of each machine */
 vector<int> npmMagazineCapacity; /* magazine capacity of each machine */
 vector<int> npmSwitchCost; /* switch cost of each machine */
 vector<int> npmCurrentToolSwitches; /* current switches count of each machine */
 vector<int> npmCurrentMakespan; /* current makespan of each machine */
 vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
 
-void fillStartMagazine(vector<int>& magazine, int machineIndex, unsigned int *actualTool, unsigned int *actualJob, unsigned int jobCount) {
+void fillStartMagazine(int machineIndex) {
     int aux = 0;
     
-    for(unsigned int i = 0 ; i <= npmJobSequency[machineIndex][0].size() ; i++) {
-        *actualJob = i;
+    for(unsigned int i = 0 ; i <= jobCount ; i++) {
+        fillJob = i;
         for (int j = 1 ; j <= tools ; j++) {
-            *actualTool = j;
+            fillTool = j;
             if(npmJobSequency[machineIndex][j][i]) {
                 if(aux < npmMagazineCapacity[machineIndex]) {
-                    if (find(magazine.begin(), magazine.end(), j) == magazine.end()) {
-                        magazine.push_back(j);
-                        aux++;
+                    if (find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
+                        npmCurrentMagazines[machineIndex][aux++] = j;
                     }
                 }
                 else {
@@ -70,20 +70,19 @@ void fillStartMagazine(vector<int>& magazine, int machineIndex, unsigned int *ac
     return;
 }
 
-void KTNS(vector<int>& magazine, vector<int>& toolsNeededSoonest, int machineIndex, unsigned int actualJob, unsigned int jobCount) {
-    if(actualJob > jobCount) 
-        return;
+void KTNS(int machineIndex, int currentJob) {
     int aux = 0;
-    for (auto i : magazine) {
-        toolsNeededSoonest[aux++] = toolsDistance(machineIndex, i, actualJob, jobCount);
+    
+    for (auto i : npmCurrentMagazines[machineIndex]) {
+        npmToolsNeededSoonest[machineIndex][aux++] = toolsDistance(machineIndex, currentJob, i);
     }
 }
 
-int toolsDistance (int machineIndex, int actualTool, int actualJob, unsigned int jobCount) {
+int toolsDistance (int machineIndex, int currentJob, int currentTool) {
     int aux = 0;
 
-    for (unsigned int i = actualJob ; i <= jobCount ; i++) {
-        if (npmJobSequency[machineIndex][actualTool][i])
+    for (unsigned int i = currentJob ; i <= jobCount ; i++) {
+        if (npmJobSequency[machineIndex][currentTool][i])
             return aux;
         else
             aux++;
@@ -94,23 +93,21 @@ int toolsDistance (int machineIndex, int actualTool, int actualJob, unsigned int
 
 int toolSwitchesEvaluation(int machineIndex)
 {
-    unsigned int actualJob = 0, actualTool = 0, switchCount = 0, jobCount = npmJobSequency[machineIndex][0].size();
-    vector<int> magazine, toolsNeededSoonest;
-    toolsNeededSoonest.resize(npmMagazineCapacity[machineIndex]);
+    jobCount = npmJobSequency[machineIndex][0].size();
+    switchCount = 0;
 
-    fillStartMagazine(magazine, machineIndex, &actualTool, &actualJob, jobCount);
+    fillStartMagazine(machineIndex);
 
-    KTNS(magazine, toolsNeededSoonest, machineIndex, actualJob, jobCount);
-    for (unsigned int i = actualJob ; i <= jobCount ; i++) {
+    for (unsigned int i = fillJob ; i <= jobCount ; i++) {
+        KTNS(machineIndex, i);
         for(int j = 1 ; j <= tools ; j++) {
-            if(npmJobSequency[machineIndex][j][i] && find(magazine.begin(), magazine.end(), j) == magazine.end()) {         
-                int indexChangedTool = distance(toolsNeededSoonest.begin(), max_element(toolsNeededSoonest.begin(), toolsNeededSoonest.end()));
-                magazine[indexChangedTool] = j;
-                toolsNeededSoonest[indexChangedTool] = toolsDistance(machineIndex, j, i, jobCount);
+            if(npmJobSequency[machineIndex][j][i] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {         
+                int indexChangedTool = distance(npmToolsNeededSoonest[machineIndex].begin(), max_element(npmToolsNeededSoonest[machineIndex].begin(), npmToolsNeededSoonest[machineIndex].end()));
+                npmCurrentMagazines[machineIndex][indexChangedTool] = j;
+                npmToolsNeededSoonest[machineIndex][indexChangedTool] = toolsDistance(machineIndex, i, j);
                 switchCount++;
             }
         }
-        KTNS(magazine, toolsNeededSoonest, machineIndex, i + 1, jobCount);
     }
 
     return switchCount;
@@ -148,7 +145,6 @@ void singleRun(string inputFileName, string fpOut, int run)
     readProblem(inputFileName);
 
     toolSwitchesEvaluation(0);
-    printSolution(0, 0);
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();		
 
@@ -157,7 +153,7 @@ void singleRun(string inputFileName, string fpOut, int run)
   	duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
 	runningTime =  time_span.count();											
 
-	//printSolution(runningTime, run, PRINT_MATRIX);			
+	printSolution(runningTime, run);			
 
 	termination();																
 }
@@ -175,6 +171,15 @@ void readProblem(string fileName)
     for(int i = 0 ; i < machines ; i++) {
         fpIn >> aux;
         npmMagazineCapacity.push_back(aux);
+    }
+    
+    npmCurrentMagazines.resize(machines);
+    for(int i = 0 ; i < machines ; i++) {
+        npmCurrentMagazines[i].resize(npmMagazineCapacity[i]);
+    }
+    npmToolsNeededSoonest.resize(machines);
+    for(int i = 0 ; i < machines ; i++) {
+        npmToolsNeededSoonest[i].resize(npmMagazineCapacity[i]);
     }
     for(int i = 0 ; i < machines ; i++) {
         fpIn >> aux;
@@ -235,11 +240,19 @@ void termination()
     for (auto& v : toolsAndJobs) {
         v.clear();
     }
+    for (auto & v : npmCurrentMagazines) {
+        v.clear();
+    }
+    for (auto & v : npmToolsNeededSoonest) {
+        v.clear();
+    }
 
     npmJobSequency.clear();
     npmJobTime.clear();
     npmSwitchCost.clear();
     npmCurrentToolSwitches.clear();
+    npmCurrentMagazines.clear();
+    npmToolsNeededSoonest.clear();
     npmCurrentMakespan.clear();
     npmCurrentFlowTime.clear();
     toolsAndJobs.clear();
@@ -247,6 +260,10 @@ void termination()
     machines = 0;
     tools = 0;
     jobs = 0;
+    fillJob = 0;
+    fillTool = 0; 
+    switchCount = 0;
+    jobCount = 0;
 }
 
 void printSolution(double runningTime, int run) {
@@ -279,6 +296,7 @@ void printSolution(double runningTime, int run) {
     cout << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
     cout << "--- TOTAL FLOWTIME : " << totalFlowtime << endl;
     cout << "--- TOTAL MAKESPAN : " << totalMakespan << endl;
+    cout << "--- RUNNING TIME : " << runningTime << endl;
 }
 
 void printMatrix(vector<vector<int>> matrix) { 
