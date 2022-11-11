@@ -6,5 +6,7 @@ foreach($files as $f) {
     $csv = file_get_contents($f);
     $csv = preg_replace('#\;NA#is', '', $csv);
     $csv = preg_replace('#\;#is', ' ', $csv);
-    file_put_contents($f, $csv);
+    $txt = substr($f, 0, -3) . 'txt';
+    shell_exec("rm $f");
+    file_put_contents($txt, $csv);
 }

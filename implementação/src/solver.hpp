@@ -22,9 +22,9 @@ void initialization();
 /* Terminates all data structures */
 void termination();
 
-void fillStartMagazine(vector<int>& magazine, int machineIndex, int *actualTool, int *actualJob);
-void KTNS(vector<int>& magazine, vector<int>& toolsNeededSoonest, int machineIndex, int actualJob);
-int toolsDistance (int machineIndex, int actualTool, int actualJob);
+void fillStartMagazine(vector<int>& magazine, int machineIndex, unsigned int *actualTool, unsigned int *actualJob, unsigned int jobCount);
+void KTNS(vector<int>& magazine, vector<int>& toolsNeededSoonest, int machineIndex, unsigned int actualJob, unsigned int jobCount);
+int toolsDistance (int machineIndex, int actualTool, int actualJob, unsigned int jobCount);
 int toolSwitchesEvaluation(int machineIndex);
 int flowtimeEvaluation(int machineIndex);
 int makespanEvaluation(int machineIndex);
@@ -47,39 +47,42 @@ vector<int> npmCurrentToolSwitches; /* current switches count of each machine */
 vector<int> npmCurrentMakespan; /* current makespan of each machine */
 vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
 
-void fillStartMagazine(vector<int>& magazine, int machineIndex, int *actualTool, int *actualJob) {
+void fillStartMagazine(vector<int>& magazine, int machineIndex, unsigned int *actualTool, unsigned int *actualJob, unsigned int jobCount) {
     int aux = 0;
     
-    for(long unsigned int i = 0 ; i <= npmJobSequency[machineIndex][0].size() ; i++) {
+    for(unsigned int i = 0 ; i <= npmJobSequency[machineIndex][0].size() ; i++) {
         *actualJob = i;
         for (int j = 1 ; j <= tools ; j++) {
             *actualTool = j;
-            if(!npmJobSequency[machineIndex][j][i])
-                continue;
-            if(aux < npmMagazineCapacity[machineIndex]) {
-                if (find(magazine.begin(), magazine.end(), j) == magazine.end()) {
-                    magazine.push_back(j);
-                    aux++;
+            if(npmJobSequency[machineIndex][j][i]) {
+                if(aux < npmMagazineCapacity[machineIndex]) {
+                    if (find(magazine.begin(), magazine.end(), j) == magazine.end()) {
+                        magazine.push_back(j);
+                        aux++;
+                    }
                 }
-            }
-            else {
-                return;
+                else {
+                    return;
+                }
             }
         }
     }
     return;
 }
 
-void KTNS(vector<int>& magazine, vector<int>& toolsNeededSoonest, int machineIndex, int actualJob) {
+void KTNS(vector<int>& magazine, vector<int>& toolsNeededSoonest, int machineIndex, unsigned int actualJob, unsigned int jobCount) {
+    if(actualJob > jobCount) 
+        return;
+    int aux = 0;
     for (auto i : magazine) {
-        toolsNeededSoonest.push_back(toolsDistance(machineIndex, i, actualJob));
+        toolsNeededSoonest[aux++] = toolsDistance(machineIndex, i, actualJob, jobCount);
     }
 }
 
-int toolsDistance (int machineIndex, int actualTool, int actualJob) {
+int toolsDistance (int machineIndex, int actualTool, int actualJob, unsigned int jobCount) {
     int aux = 0;
 
-    for (long unsigned int i = actualJob ; i <= npmJobSequency[machineIndex][0].size() ; i++) {
+    for (unsigned int i = actualJob ; i <= jobCount ; i++) {
         if (npmJobSequency[machineIndex][actualTool][i])
             return aux;
         else
@@ -91,23 +94,23 @@ int toolsDistance (int machineIndex, int actualTool, int actualJob) {
 
 int toolSwitchesEvaluation(int machineIndex)
 {
-    int actualJob = 0, actualTool = 0, switchCount = 0;
+    unsigned int actualJob = 0, actualTool = 0, switchCount = 0, jobCount = npmJobSequency[machineIndex][0].size();
     vector<int> magazine, toolsNeededSoonest;
+    toolsNeededSoonest.resize(npmMagazineCapacity[machineIndex]);
 
-    fillStartMagazine(magazine, machineIndex, &actualTool, &actualJob);
+    fillStartMagazine(magazine, machineIndex, &actualTool, &actualJob, jobCount);
 
-    for (long unsigned int i = actualJob ; i <= npmJobSequency[machineIndex][0].size() ; i++) {
-        toolsNeededSoonest.clear();
+    KTNS(magazine, toolsNeededSoonest, machineIndex, actualJob, jobCount);
+    for (unsigned int i = actualJob ; i <= jobCount ; i++) {
         for(int j = 1 ; j <= tools ; j++) {
-            if(npmJobSequency[machineIndex][j][i] && find(magazine.begin(), magazine.end(), j) == magazine.end()) {
-                if (!toolsNeededSoonest.size())
-                    KTNS(magazine, toolsNeededSoonest, machineIndex, i);
+            if(npmJobSequency[machineIndex][j][i] && find(magazine.begin(), magazine.end(), j) == magazine.end()) {         
                 int indexChangedTool = distance(toolsNeededSoonest.begin(), max_element(toolsNeededSoonest.begin(), toolsNeededSoonest.end()));
                 magazine[indexChangedTool] = j;
-                toolsNeededSoonest[indexChangedTool] = toolsDistance(machineIndex, j, i);
+                toolsNeededSoonest[indexChangedTool] = toolsDistance(machineIndex, j, i, jobCount);
                 switchCount++;
             }
         }
+        KTNS(magazine, toolsNeededSoonest, machineIndex, i + 1, jobCount);
     }
 
     return switchCount;
@@ -119,7 +122,7 @@ int flowtimeEvaluation(int machineIndex)
     return 1;
     int flowTime = 0;
 
-    for (long unsigned int i = 0 ; i < npmJobSequency[machineIndex][0].size() ; i++) {
+    for (unsigned int i = 0 ; i < npmJobSequency[machineIndex][0].size() ; i++) {
         flowTime += npmJobTime[machineIndex][npmJobSequency[machineIndex][0][i]];
     }
     flowTime += toolSwitchesEvaluation(machineIndex) * npmSwitchCost[machineIndex];
@@ -132,7 +135,7 @@ int makespanEvaluation(int machineIndex)
 {
 	int makespan = 0;
 
-    for (long unsigned int i = 0 ; i < npmJobSequency[machineIndex][0].size() ; i++) {
+    for (unsigned int i = 0 ; i < npmJobSequency[machineIndex][0].size() ; i++) {
         makespan += npmJobTime[machineIndex][npmJobSequency[machineIndex][0][i]];
     }
     
@@ -256,7 +259,7 @@ void printSolution(double runningTime, int run) {
             printMatrix(npmJobSequency[i]);
 
         cout << "JOBS : ";
-        for(long unsigned int j = 0 ; j < npmJobSequency[i][0].size(); j++) {
+        for(unsigned int j = 0 ; j < npmJobSequency[i][0].size(); j++) {
             cout << npmJobSequency[i][0][j] << " ";
         }
         cout << endl;
@@ -279,8 +282,8 @@ void printSolution(double runningTime, int run) {
 }
 
 void printMatrix(vector<vector<int>> matrix) { 
-    for (long unsigned int i = 1 ; i < matrix.size() ; i++) {
-        for (long unsigned int j = 0 ; j < matrix[0].size() ; j++) {
+    for (unsigned int i = 1 ; i < matrix.size() ; i++) {
+        for (unsigned int j = 0 ; j < matrix[0].size() ; j++) {
             cout << matrix[i][j] << " ";
         }
         cout << endl;
