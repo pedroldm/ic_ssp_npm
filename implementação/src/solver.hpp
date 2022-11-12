@@ -82,8 +82,10 @@ void fillStartMagazine(int machineIndex) {
 void KTNS(int machineIndex, int currentJob) {
     int aux = 0;
     
-    for (auto i : npmCurrentMagazines[machineIndex])
-        (!npmToolsNeededSoonest[machineIndex][aux]) ? npmToolsNeededSoonest[machineIndex][aux++] = toolsDistance(machineIndex, currentJob, i) : npmToolsNeededSoonest[machineIndex][aux++]--;
+    for (auto i : npmCurrentMagazines[machineIndex]) {
+        (!npmToolsNeededSoonest[machineIndex][aux]) ? npmToolsNeededSoonest[machineIndex][aux] = toolsDistance(machineIndex, currentJob, i) : npmToolsNeededSoonest[machineIndex][aux]--;
+        aux++;
+    }
 }
 
 int toolsDistance (int machineIndex, int currentJob, int currentTool) {
