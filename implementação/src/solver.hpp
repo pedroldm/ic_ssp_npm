@@ -16,10 +16,23 @@ using namespace std::chrono;
 
 #define PRINT_MATRIX true
 
+/* I/O */
 void readProblem(string fileName);
+template <typename T>
+void printVector(vector<T> v);
+void printMatrix(vector<vector<int>> matrix);
+template <typename S>
+void printSolution(string inputFileName, double runningTime, int run, S &s);
+template <typename T>
+ostream& operator<<(ostream& os, const vector<T>& v);
+template<typename T>
+ostream& operator<< (ostream& out, const vector<vector<T>>& matrix);
+
+/* Initializes and terminates all data structures */
 void initialization();
 void termination();
 
+/* Evaluation functions */
 void fillStartMagazine(int machineIndex);
 void KTNS(int machineIndex, int currentJob);
 int toolsDistance (int machineIndex, int currentJob, int currentTool);
@@ -27,16 +40,10 @@ int toolSwitchesEvaluation(int machineIndex);
 int flowtimeEvaluation(int machineIndex);
 int makespanEvaluation(int machineIndex);
 
-void singleRun(string inputFileName, string fpOut, int run);
+void singleRun(string inputFileName, ofstream& outputFile, int run);
 
-template <typename T>
-void printVector(vector<T> v);
-void printMatrix(vector<vector<int>> matrix);
-/* Prints the solution information to the output file */
-void printSolution(double runningTime, int run);
-
-int machines, tools, jobs; /* quantity of machines, tools and jobs */
-unsigned int fillJob, fillTool, switchCount, jobCount;
+int machines, tools, jobs, indexChangedTool; /* quantity of machines, tools and jobs. Index of the tool to be substituted */
+unsigned int fillJob, fillTool, switchCount, jobCount; /* current job and tool after initializing the magazine and switch and job counters */
 vector<vector<vector<int>>> npmJobSequency; /* current jobs and tools assigned to each machine */
 vector<vector<int>> toolsAndJobs; /* all tools and jobs */
 vector<vector<int>> npmJobTime; /* time cost of each job on each machine */
@@ -50,6 +57,8 @@ vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
 
 void fillStartMagazine(int machineIndex) {
     int aux = 0;
+
+    fill(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), 0);
     
     for(unsigned int i = 0 ; i <= jobCount ; i++) {
         fillJob = i;
@@ -91,8 +100,7 @@ int toolsDistance (int machineIndex, int currentJob, int currentTool) {
     return INT_MAX;
 }
 
-int toolSwitchesEvaluation(int machineIndex)
-{
+int toolSwitchesEvaluation(int machineIndex) {
     jobCount = npmJobSequency[machineIndex][0].size();
     switchCount = 0;
 
@@ -102,9 +110,9 @@ int toolSwitchesEvaluation(int machineIndex)
         KTNS(machineIndex, i);
         for(int j = 1 ; j <= tools ; j++) {
             if(npmJobSequency[machineIndex][j][i] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {         
-                int indexChangedTool = distance(npmToolsNeededSoonest[machineIndex].begin(), max_element(npmToolsNeededSoonest[machineIndex].begin(), npmToolsNeededSoonest[machineIndex].end()));
+                indexChangedTool = distance(npmToolsNeededSoonest[machineIndex].begin(), max_element(npmToolsNeededSoonest[machineIndex].begin(), npmToolsNeededSoonest[machineIndex].end()));
                 npmCurrentMagazines[machineIndex][indexChangedTool] = j;
-                npmToolsNeededSoonest[machineIndex][indexChangedTool] = toolsDistance(machineIndex, i, j);
+                npmToolsNeededSoonest[machineIndex][indexChangedTool] = 0;
                 switchCount++;
             }
         }
@@ -113,74 +121,74 @@ int toolSwitchesEvaluation(int machineIndex)
     return switchCount;
 }
 
-/* Flowtime Evaluation Function */
-int flowtimeEvaluation(int machineIndex)
-{
-    return 1;
+int flowtimeEvaluation(int machineIndex) {
+    jobCount = npmJobSequency[machineIndex][0].size();
     int flowTime = 0;
-
-    for (unsigned int i = 0 ; i < npmJobSequency[machineIndex][0].size() ; i++) {
-        flowTime += npmJobTime[machineIndex][npmJobSequency[machineIndex][0][i]];
+    
+    fillStartMagazine(machineIndex);
+    
+    for (unsigned int i = 0 ; i <= jobCount ; i++) {
+        KTNS(machineIndex, i);
+        switchCount = 0;
+        for (int j = 1 ; j <= tools ; j++) {
+            if(npmJobSequency[machineIndex][j][i] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
+                int indexChangedTool = distance(npmToolsNeededSoonest[machineIndex].begin(), max_element(npmToolsNeededSoonest[machineIndex].begin(), npmToolsNeededSoonest[machineIndex].end()));
+                npmCurrentMagazines[machineIndex][indexChangedTool] = j;
+                npmToolsNeededSoonest[machineIndex][indexChangedTool] = 0;
+                switchCount++;
+            }
+        }
+        flowTime += npmJobTime[machineIndex][npmJobSequency[machineIndex][0][i]] + switchCount * npmSwitchCost[machineIndex];
     }
-    flowTime += toolSwitchesEvaluation(machineIndex) * npmSwitchCost[machineIndex];
     
     return flowTime;
 }
 
-/* Makespan Evaluation Function */
-int makespanEvaluation(int machineIndex)
-{
+int makespanEvaluation(int machineIndex) {
 	int makespan = 0;
 
     for (unsigned int i = 0 ; i < npmJobSequency[machineIndex][0].size() ; i++) {
         makespan += npmJobTime[machineIndex][npmJobSequency[machineIndex][0][i]];
     }
+
+    makespan += toolSwitchesEvaluation(machineIndex) * npmSwitchCost[machineIndex];
     
     return makespan;
 }
 
-void singleRun(string inputFileName, string fpOut, int run)
-{
+void singleRun(string inputFileName, ofstream& outputFile, int run) {
     double runningTime;
     readProblem(inputFileName);
 
-    toolSwitchesEvaluation(0);
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();		
+    /* solve */
 
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 
   	duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
 	runningTime =  time_span.count();											
 
-	printSolution(runningTime, run);			
+	printSolution(inputFileName, runningTime, run, cout);		
+	printSolution(inputFileName, runningTime, run, outputFile);		
 
 	termination();																
 }
 
 /* Reads the problem from a file specified by fileName */
-void readProblem(string fileName)
-{
+void readProblem(string fileName) {
 	ifstream fpIn(fileName);
     int aux;
 
     fpIn >> machines >> jobs >> tools;
 
-    initialization();
-
     for(int i = 0 ; i < machines ; i++) {
         fpIn >> aux;
         npmMagazineCapacity.push_back(aux);
     }
-    
-    npmCurrentMagazines.resize(machines);
-    for(int i = 0 ; i < machines ; i++) {
-        npmCurrentMagazines[i].resize(npmMagazineCapacity[i]);
-    }
-    npmToolsNeededSoonest.resize(machines);
-    for(int i = 0 ; i < machines ; i++) {
-        npmToolsNeededSoonest[i].resize(npmMagazineCapacity[i]);
-    }
+
+    initialization();
+
     for(int i = 0 ; i < machines ; i++) {
         fpIn >> aux;
         npmSwitchCost.push_back(aux);
@@ -202,8 +210,7 @@ void readProblem(string fileName)
     }
 }
 
-void initialization()
-{
+void initialization() {
     toolsAndJobs.resize(tools + 1); /* Primeira linha = índice {0,..., j-1} de cada tarefa */
     toolsAndJobs[0].push_back(INT_MAX); /* [0][0] */
     for(int i = 0 ; i < jobs ; i++) { /* Adicionando os índices das tarefas à primeira linha */
@@ -218,6 +225,15 @@ void initialization()
             npmJobSequency[i][0].push_back(j);
         }
     }
+
+    npmCurrentMagazines.resize(machines);
+    for(int i = 0 ; i < machines ; i++) {
+        npmCurrentMagazines[i].resize(npmMagazineCapacity[i]);
+    }
+    npmToolsNeededSoonest.resize(machines);
+    for(int i = 0 ; i < machines ; i++) {
+        npmToolsNeededSoonest[i].resize(npmMagazineCapacity[i]);
+    }
     
     for(int i = 0 ; i < machines ; i++) {
         npmCurrentToolSwitches.push_back(INT_MAX);
@@ -226,8 +242,7 @@ void initialization()
     }
 }
 
-void termination()
-{
+void termination() {
     for (auto& v : npmJobSequency) {
         for (auto& x : v) {
             x.clear();
@@ -264,56 +279,61 @@ void termination()
     fillTool = 0; 
     switchCount = 0;
     jobCount = 0;
+    indexChangedTool = 0;
 }
 
-void printSolution(double runningTime, int run) {
+template <typename S>
+void printSolution(string inputFileName, double runningTime, int run, S &s) {
     int totalToolSwitches = 0, totalFlowtime = 0, totalMakespan = 0;
 
+    s << "RUN : " << run << " - " << inputFileName << "\n\n";
     for (int i = 0 ; i < machines ; i++) {
-        cout << "- MACHINE [" << i << "]" << "\n\n";
+        s << "- MACHINE [" << i << "]" << "\n\n";
 
-        if (PRINT_MATRIX) 
-            printMatrix(npmJobSequency[i]);
+        if (PRINT_MATRIX) s << npmJobSequency[i];
 
-        cout << "JOBS : ";
-        for(unsigned int j = 0 ; j < npmJobSequency[i][0].size(); j++) {
-            cout << npmJobSequency[i][0][j] << " ";
-        }
-        cout << endl;
+        s << "JOBS " << npmJobSequency[i][0];
 
         totalToolSwitches += npmCurrentToolSwitches[i] = toolSwitchesEvaluation(i);
-        totalMakespan += npmCurrentMakespan[i] = makespanEvaluation(i);
-        npmCurrentFlowTime[i] = flowtimeEvaluation(i);
-        if (npmCurrentFlowTime[i] > totalFlowtime) 
-            totalFlowtime = npmCurrentFlowTime[i];
+        totalFlowtime += npmCurrentFlowTime[i] = flowtimeEvaluation(i);
+        npmCurrentMakespan[i] = makespanEvaluation(i);
+        if (npmCurrentMakespan[i] > totalMakespan) totalMakespan= npmCurrentMakespan[i];
 
-        cout << "TOOL SWITCHES : " << npmCurrentToolSwitches[i] << endl;
-        cout << "FLOWTIME : " << npmCurrentFlowTime[i] << endl;
-        cout << "MAKESPAN : " << npmCurrentMakespan[i] << "\n\n";
+        s << "TOOL SWITCHES : " << npmCurrentToolSwitches[i] << endl;
+        s << "FLOWTIME : " << npmCurrentFlowTime[i] << endl;
+        s << "MAKESPAN : " << npmCurrentMakespan[i] << "\n\n";
     }
 
-    cout << "--------------------------" << "\n\n";
-    cout << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
-    cout << "--- TOTAL FLOWTIME : " << totalFlowtime << endl;
-    cout << "--- TOTAL MAKESPAN : " << totalMakespan << endl;
-    cout << "--- RUNNING TIME : " << runningTime << endl;
+    s << "# -------------------------- #" << "\n\n";
+    s << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
+    s << "--- TOTAL FLOWTIME : " << totalFlowtime << endl;
+    s << "--- TOTAL MAKESPAN : " << totalMakespan << endl;
+    s << "--- RUNNING TIME : " << runningTime << "\n\n";
+    s << "# -------------------------- #\n";
 }
 
-void printMatrix(vector<vector<int>> matrix) { 
+template <typename T>
+ostream& operator<<(ostream& os, const vector<T>& vector) {
+    os << "[" << vector.size() << "] - [";
+    for (unsigned int i = 0; i < vector.size(); ++i) {
+        os << vector[i];
+        if (i != vector.size() - 1)
+            os << ", ";
+    }
+    os << "]\n";
+    return os;
+}
+
+template<typename T>
+ostream& operator<<(ostream& out, const vector<vector<T>>& matrix) {
     for (unsigned int i = 1 ; i < matrix.size() ; i++) {
         for (unsigned int j = 0 ; j < matrix[0].size() ; j++) {
-            cout << matrix[i][j] << " ";
+            out << matrix[i][j] << " ";
         }
-        cout << endl;
+        out << endl;
     }
-    cout << endl;
-}
-
-template <typename T> 
-void printVector(vector<T> v) {
-    for (auto i : v)
-        cout << i << " ";
-    cout << endl;
+    out << endl;
+    return out;
 }
 
 #endif
