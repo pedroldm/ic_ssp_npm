@@ -11,6 +11,8 @@
 #include <chrono>
 #include <cstdio>
 
+/* flowtime = completion time - arrival time */
+
 using namespace std;
 using namespace std::chrono;
 
@@ -62,11 +64,11 @@ void fillStartMagazine(int machineIndex) {
     
     for(unsigned int i = 0 ; i < jobCount ; i++) {
         fillJob = i;
-        for (int j = 1 ; j <= tools ; j++) {
+        for(int j = 1 ; j <= tools ; j++) {
             fillTool = j;
             if(toolsAndJobs[j][npmJobSequency[machineIndex][i]]) {
                 if(aux < npmMagazineCapacity[machineIndex]) {
-                    if (find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
+                    if(find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
                         npmCurrentMagazines[machineIndex][aux++] = j;
                     }
                 }
@@ -82,16 +84,17 @@ void fillStartMagazine(int machineIndex) {
 void KTNS(int machineIndex, int currentJob) {
     int aux = 0;
     
-    for (auto i : npmCurrentMagazines[machineIndex]) {
-        npmToolsNeededSoonest[machineIndex][aux++] = toolsDistance(machineIndex, currentJob, i);
+    for(auto i : npmCurrentMagazines[machineIndex]) {
+        (!npmToolsNeededSoonest[machineIndex][aux]) ? npmToolsNeededSoonest[machineIndex][aux] = toolsDistance(machineIndex, currentJob, i) : npmToolsNeededSoonest[machineIndex][aux]--;
+        aux++;
     }
 }
 
 int toolsDistance (int machineIndex, int currentJob, int currentTool) {
     int aux = 0;
 
-    for (unsigned int i = currentJob ; i <= jobCount ; i++) {
-        if (toolsAndJobs[currentTool][i])
+    for(unsigned int i = currentJob ; i <= jobCount ; i++) {
+        if(toolsAndJobs[currentTool][i])
             return aux;
         else
             aux++;
@@ -106,15 +109,15 @@ int toolSwitchesEvaluation(int machineIndex) {
 
     fillStartMagazine(machineIndex);
 
-    for (unsigned int i = fillJob ; i < jobCount ; i++) {
+    for(unsigned int i = fillJob ; i < jobCount ; i++) {
         KTNS(machineIndex, i);
         for(int j = 1 ; j <= tools ; j++) {
-            if(toolsAndJobs[j][npmJobSequency[machineIndex][i]] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {         
-                indexChangedTool = distance(npmToolsNeededSoonest[machineIndex].begin(), max_element(npmToolsNeededSoonest[machineIndex].begin(), npmToolsNeededSoonest[machineIndex].end()));
-                npmCurrentMagazines[machineIndex][indexChangedTool] = j;
-                npmToolsNeededSoonest[machineIndex][indexChangedTool] = 0;
-                switchCount++;
-            }
+            if(toolsAndJobs[j][npmJobSequency[machineIndex][i]] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
+                int indexToolChange = distance(begin(npmToolsNeededSoonest[machineIndex]), max_element(begin(npmToolsNeededSoonest[machineIndex]), end(npmToolsNeededSoonest[machineIndex])));
+                npmCurrentMagazines[machineIndex][indexToolChange] = j;
+                npmToolsNeededSoonest[machineIndex][indexToolChange] = 0;
+                switchCount++;  
+            }   
         }
     } 
 
@@ -122,38 +125,17 @@ int toolSwitchesEvaluation(int machineIndex) {
 }
 
 int flowtimeEvaluation(int machineIndex) {
-    jobCount = npmJobSequency[machineIndex].size();
-    int flowTime = 0;
-    
-    fillStartMagazine(machineIndex);
-    
-    for (unsigned int i = 0 ; i < jobCount ; i++) {
-        KTNS(machineIndex, i);
-        switchCount = 0;
-        for (int j = 1 ; j <= tools ; j++) {
-            if(toolsAndJobs[j][i] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
-                int indexChangedTool = distance(npmToolsNeededSoonest[machineIndex].begin(), max_element(npmToolsNeededSoonest[machineIndex].begin(), npmToolsNeededSoonest[machineIndex].end()));
-                npmCurrentMagazines[machineIndex][indexChangedTool] = j;
-                npmToolsNeededSoonest[machineIndex][indexChangedTool] = 0;
-                switchCount++;
-            }
-        }
-        flowTime += npmJobTime[machineIndex][i] + switchCount * npmSwitchCost[machineIndex];
-    } 
-    
-    return flowTime;
+	int flowtime = 0;
+
+    for(unsigned int i = 0 ; i < npmJobSequency[machineIndex].size() ; i++) {
+        flowtime += npmJobTime[machineIndex][npmJobSequency[machineIndex][i]];
+    }
+
+    return flowtime;
 }
 
 int makespanEvaluation(int machineIndex) {
-	int makespan = 0;
-
-    for (unsigned int i = 0 ; i < npmJobSequency[machineIndex].size() ; i++) {
-        makespan += npmJobTime[machineIndex][npmJobSequency[machineIndex][i]];
-    }
-
-    makespan += toolSwitchesEvaluation(machineIndex) * npmSwitchCost[machineIndex]; 
-    
-    return makespan;
+    return flowtimeEvaluation(machineIndex) + toolSwitchesEvaluation(machineIndex) * npmSwitchCost[machineIndex];
 }
 
 void singleRun(string inputFileName, ofstream& outputFile, int run) {
@@ -195,7 +177,7 @@ void readProblem(string fileName) {
     }
 
     for(int i = 0 ; i < machines ; i++) {
-        for (int j = 0 ; j < jobs ; j++) {
+        for(int j = 0 ; j < jobs ; j++) {
             fpIn >> aux;
             npmJobTime[i].push_back(aux);
         }
@@ -242,19 +224,19 @@ void initialization() {
 }
 
 void termination() {
-    for (auto& v : npmJobSequency) {
+    for(auto& v : npmJobSequency) {
         v.clear();
     }
-    for (auto& v : npmJobTime) {
+    for(auto& v : npmJobTime) {
         v.clear();
     }
-    for (auto& v : toolsAndJobs) {
+    for(auto& v : toolsAndJobs) {
         v.clear();
     }
-    for (auto & v : npmCurrentMagazines) {
+    for(auto & v : npmCurrentMagazines) {
         v.clear();
     }
-    for (auto & v : npmToolsNeededSoonest) {
+    for(auto & v : npmToolsNeededSoonest) {
         v.clear();
     }
 
@@ -283,12 +265,12 @@ void printSolution(string inputFileName, double runningTime, int run, S &s) {
     int totalToolSwitches = 0, totalFlowtime = 0, totalMakespan = 0;
 
     s << "RUN : " << run << " - " << inputFileName << "\n\n";
-    for (int i = 0 ; i < machines ; i++) {
+    for(int i = 0 ; i < machines ; i++) {
         s << "- MACHINE [" << i << "]" << "\n\n";
 
-        if (PRINT_MATRIX) {
-            for (int j = 1 ; j <= tools ; j++) {
-                for (int k : npmJobSequency[i]) {
+        if(PRINT_MATRIX) {
+            for(int j = 1 ; j <= tools ; j++) {
+                for(int k : npmJobSequency[i]) {
                     s << toolsAndJobs[j][k] << " ";
                 }
                 s << endl;
@@ -300,7 +282,9 @@ void printSolution(string inputFileName, double runningTime, int run, S &s) {
         totalToolSwitches += npmCurrentToolSwitches[i] = toolSwitchesEvaluation(i);
         totalFlowtime += npmCurrentFlowTime[i] = flowtimeEvaluation(i);
         npmCurrentMakespan[i] = makespanEvaluation(i);
-        if (npmCurrentMakespan[i] > totalMakespan) totalMakespan= npmCurrentMakespan[i];
+
+        if(npmCurrentMakespan[i] > totalMakespan) 
+            totalMakespan = npmCurrentMakespan[i];
 
         s << "TOOL SWITCHES : " << npmCurrentToolSwitches[i] << endl;
         s << "FLOWTIME : " << npmCurrentFlowTime[i] << endl;
@@ -318,9 +302,9 @@ void printSolution(string inputFileName, double runningTime, int run, S &s) {
 template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& vector) {
     os << "[" << vector.size() << "] - [";
-    for (unsigned int i = 0; i < vector.size(); ++i) {
+    for(unsigned int i = 0; i < vector.size(); ++i) {
         os << vector[i];
-        if (i != vector.size() - 1)
+        if(i != vector.size() - 1)
             os << ", ";
     }
     os << "]\n";
@@ -329,8 +313,8 @@ ostream& operator<<(ostream& os, const vector<T>& vector) {
 
 template<typename T>
 ostream& operator<<(ostream& out, const vector<vector<T>>& matrix) {
-    for (unsigned int i = 1 ; i < matrix.size() ; i++) {
-        for (unsigned int j = 0 ; j < matrix[0].size() ; j++) {
+    for(unsigned int i = 1 ; i < matrix.size() ; i++) {
+        for(unsigned int j = 0 ; j < matrix[0].size() ; j++) {
             out << matrix[i][j] << " ";
         }
         out << endl;
