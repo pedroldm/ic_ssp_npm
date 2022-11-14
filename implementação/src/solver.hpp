@@ -10,6 +10,7 @@
 #include <vector>
 #include <chrono>
 #include <cstdio>
+#include <tuple>
 
 /* flowtime = completion time - arrival time */
 
@@ -35,7 +36,7 @@ void initialization();
 void termination();
 
 /* Evaluation functions */
-void fillStartMagazine(int machineIndex);
+tuple<int,int> fillStartMagazine(int machineIndex);
 void KTNS(int machineIndex, int currentJob);
 int toolsDistance (int machineIndex, int currentJob, int currentTool);
 int toolSwitchesEvaluation(int machineIndex);
@@ -45,7 +46,7 @@ int makespanEvaluation(int machineIndex);
 void singleRun(string inputFileName, ofstream& outputFile, int run);
 
 int machines, tools, jobs, indexChangedTool; /* quantity of machines, tools and jobs. Index of the tool to be substituted */
-unsigned int fillJob, fillTool, switchCount, jobCount; /* current job and tool after initializing the magazine and switch and job counters */
+unsigned int switchCount, jobCount; /* current job and tool after initializing the magazine and switch and job counters */
 vector<vector<int>> npmJobSequency; /* current jobs and tools assigned to each machine */
 vector<vector<int>> toolsAndJobs; /* all tools and jobs */
 vector<vector<int>> npmJobTime; /* time cost of each job on each machine */
@@ -57,15 +58,14 @@ vector<int> npmCurrentToolSwitches; /* current switches count of each machine */
 vector<int> npmCurrentMakespan; /* current makespan of each machine */
 vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
 
-void fillStartMagazine(int machineIndex) {
-    int aux = 0;
+tuple<int,int> fillStartMagazine(int machineIndex) {
+    unsigned int i;
+    int j, aux = 0;
 
     fill(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), 0);
     
-    for(unsigned int i = 0 ; i < jobCount ; i++) {
-        fillJob = i;
-        for(int j = 1 ; j <= tools ; j++) {
-            fillTool = j;
+    for(i = 0 ; i < jobCount ; i++) {
+        for(j = 1 ; j <= tools ; j++) {
             if(toolsAndJobs[j][npmJobSequency[machineIndex][i]]) {
                 if(aux < npmMagazineCapacity[machineIndex]) {
                     if(find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
@@ -73,12 +73,12 @@ void fillStartMagazine(int machineIndex) {
                     }
                 }
                 else {
-                    return;
+                    return tuple<int, int>(i, j);
                 }
             }
         }
     } 
-    return;
+    return tuple<int, int>(i, j);
 }
 
 void KTNS(int machineIndex, int currentJob) {
@@ -107,11 +107,11 @@ int toolSwitchesEvaluation(int machineIndex) {
     jobCount = npmJobSequency[machineIndex].size();
     switchCount = 0;
 
-    fillStartMagazine(machineIndex);
+    tuple<int, int> fill = fillStartMagazine(machineIndex);
 
-    for(unsigned int i = fillJob ; i < jobCount ; i++) {
+    for(unsigned int i = get<0>(fill) ; i < jobCount ; i++) {
         KTNS(machineIndex, i);
-        for(int j = 1 ; j <= tools ; j++) {
+        for(int j = get<0>(fill) ; j <= tools ; j++) {
             if(toolsAndJobs[j][npmJobSequency[machineIndex][i]] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
                 int indexToolChange = distance(begin(npmToolsNeededSoonest[machineIndex]), max_element(begin(npmToolsNeededSoonest[machineIndex]), end(npmToolsNeededSoonest[machineIndex])));
                 npmCurrentMagazines[machineIndex][indexToolChange] = j;
@@ -253,8 +253,6 @@ void termination() {
     machines = 0;
     tools = 0;
     jobs = 0;
-    fillJob = 0;
-    fillTool = 0; 
     switchCount = 0;
     jobCount = 0;
     indexChangedTool = 0;
