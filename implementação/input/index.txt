@@ -1,1 +1,1 @@
-instancias_txt/SSP-NPM-I/ins1_m=2_j=10_t=10_var=1.txt
+instancias_txt/SSP-NPM-II/ins640_m=6_j=120_t=120_sw=h_dens=d_var=20.txt

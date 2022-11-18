@@ -10,7 +10,8 @@
 #include <vector>
 #include <chrono>
 #include <cstdio>
-#include <tuple>
+#include <numeric>
+#include <functional>
 
 using namespace std;
 using namespace std::chrono;
@@ -19,9 +20,6 @@ using namespace std::chrono;
 
 /* I/O */
 void readProblem(string fileName);
-template <typename T>
-void printVector(vector<T> v);
-void printMatrix(vector<vector<int>> matrix);
 template <typename S>
 void printSolution(string inputFileName, double runningTime, int run, S &s);
 template <typename T>
@@ -37,9 +35,14 @@ void termination();
 int fillStartMagazine(int machineIndex, int jobsAssignedCount);
 void fillToolsDistances(int machineIndex, int currentJob, int jobAssignedCount);
 int toolsDistances (int machineIndex, int currentJob, int currentTool, int jobAssignedCount);
-void toolSwitchesEvaluation(int machineIndex);
-void flowtimeEvaluation(int machineIndex);
-void makespanEvaluation(int machineIndex);
+int toolSwitchesEvaluation();
+int flowtimeEvaluation();
+int makespanEvaluation();
+
+/* Local search methods */
+bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
+bool twoOptLocalSearch(function<int(void)> evaluationFunction);
+bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
 
 void singleRun(string inputFileName, ofstream& outputFile, int run);
 
@@ -58,6 +61,8 @@ vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
 int fillStartMagazine(int machineIndex, int jobsAssignedCount) {
     int i, j, aux = 0;
     
+    fill(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), -1);
+
     for(i = 0 ; i < jobsAssignedCount; i++) {
         for(j = 0 ; j < toolCount ; j++) {
             if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
@@ -95,48 +100,126 @@ int toolsDistances (int machineIndex, int currentJob, int currentTool, int jobAs
     return INT_MAX;
 }
 
-void toolSwitchesEvaluation(int machineIndex) { 
-    int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
-    npmCurrentToolSwitches[machineIndex] = 0;
+int toolSwitchesEvaluation() { 
+    for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
+        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
+        npmCurrentToolSwitches[machineIndex] = 0;
 
-    int currentJob = fillStartMagazine(machineIndex, jobsAssignedCount);
+        int currentJob = fillStartMagazine(machineIndex, jobsAssignedCount);
 
-    for(int i = currentJob ; i < jobsAssignedCount ; i++) {
-        fillToolsDistances(machineIndex, i, jobsAssignedCount);
-        for(int j = 0 ; j < toolCount ; j++) {
-            if(toolsRequirements[j][npmJobAssignement[machineIndex][i]] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
-                int indexToolChange = distance(npmToolsNeedDistance[machineIndex].begin(),max_element(npmToolsNeedDistance[machineIndex].begin(), npmToolsNeedDistance[machineIndex].end()));
-                npmCurrentMagazines[machineIndex][indexToolChange] = j;
-                npmToolsNeedDistance[machineIndex][indexToolChange] = 0;
-                npmCurrentToolSwitches[machineIndex]++;
-            } 
+        for(int i = currentJob ; i < jobsAssignedCount ; i++) {
+            fillToolsDistances(machineIndex, i, jobsAssignedCount);
+            for(int j = 0 ; j < toolCount ; j++) {
+                if(toolsRequirements[j][npmJobAssignement[machineIndex][i]] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
+                    int indexToolChange = distance(npmToolsNeedDistance[machineIndex].begin(),max_element(npmToolsNeedDistance[machineIndex].begin(), npmToolsNeedDistance[machineIndex].end()));
+                    npmCurrentMagazines[machineIndex][indexToolChange] = j;
+                    npmToolsNeedDistance[machineIndex][indexToolChange] = 0;
+                    npmCurrentToolSwitches[machineIndex]++;
+                } 
+            }
         }
     }
+
+    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
 }
 
-void flowtimeEvaluation(int machineIndex) {
-	npmCurrentFlowTime[machineIndex] = 0;
-
-    for(int i = 0 ; i < (int)npmJobAssignement[machineIndex].size() ; i++) {
-        npmCurrentFlowTime[machineIndex] += npmJobTime[machineIndex][npmJobAssignement[machineIndex][i]];
+int flowtimeEvaluation() {
+    for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
+        npmCurrentFlowTime[machineIndex] = 0;
+        for(int i = 0 ; i < (int)npmJobAssignement[machineIndex].size() ; i++)
+            npmCurrentFlowTime[machineIndex] += npmJobTime[machineIndex][npmJobAssignement[machineIndex][i]];
     }
+
+    return accumulate(npmCurrentFlowTime.begin(),npmCurrentFlowTime.end(),0);
 }
 
-void makespanEvaluation(int machineIndex) {
-    toolSwitchesEvaluation(machineIndex);
-    flowtimeEvaluation(machineIndex);
-    npmCurrentMakespan[machineIndex] = npmCurrentFlowTime[machineIndex] + npmCurrentMakespan[machineIndex] * npmSwitchCost[machineIndex];
+int makespanEvaluation() {
+    int highestMakespan = 0;
+
+    toolSwitchesEvaluation();
+    flowtimeEvaluation();
+    for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
+        npmCurrentMakespan[machineIndex] = npmCurrentFlowTime[machineIndex] + npmCurrentToolSwitches[machineIndex] * npmSwitchCost[machineIndex];
+        if (npmCurrentMakespan[machineIndex] > highestMakespan)
+            highestMakespan = npmCurrentMakespan[machineIndex];
+    }
+
+    return highestMakespan;
 }
 
 void makeInitialRandomSolution() {
     vector<int> r(jobCount);
     iota(r.begin(), r.end(), 0);
 
-    mt19937 rng(std::random_device{}());
+    mt19937 rng(random_device{}());
     shuffle(r.begin(), r.end(), rng);
 
     for (int i = 0 ; i < jobCount ; i++)
         npmJobAssignement[i % machineCount].push_back(r[i]);
+}
+
+bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector) {
+    int currentBest = evaluationFunction();
+    int criticalMachine = distance(evaluationVector.begin(),max_element(evaluationVector.begin(), evaluationVector.end()));
+
+
+    for (int i = 0 ; i < (int)npmJobAssignement[criticalMachine].size() ; i++) {
+        int jobIndex = npmJobAssignement[criticalMachine][i];
+        npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + i);
+
+        for(int j = 0 ; j < machineCount ; j++) {
+            if (j == criticalMachine)
+                continue;
+            npmJobAssignement[j].insert(npmJobAssignement[j].begin(), jobIndex);
+            if(evaluationFunction() < currentBest)
+                return true;
+            for(int k = 1 ; k < (int)npmJobAssignement[j].size() ; k++) {
+                swap(npmJobAssignement[j][k - 1], npmJobAssignement[j][k]);
+                if(evaluationFunction() < currentBest)
+                    return true;
+            }
+            npmJobAssignement[j].pop_back();
+        }
+        npmJobAssignement[criticalMachine].insert(npmJobAssignement[criticalMachine].begin() + i, jobIndex);
+    }
+
+    return false;
+}
+
+bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector) {
+    int currentBest = evaluationFunction();
+    int criticalMachine = distance(evaluationVector.begin(),max_element(evaluationVector.begin(), evaluationVector.end()));
+    int briefMachine = distance(evaluationVector.begin(),min_element(evaluationVector.begin(), evaluationVector.end()));
+
+    for(int i = 0 ; i < (int)npmJobAssignement[criticalMachine].size() ; i++) {
+        for (int j = 0 ; j < (int)npmJobAssignement[briefMachine].size() ; j++) {
+            swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefMachine][j]);
+            if(evaluationFunction() < currentBest)
+                    return true;
+            else
+                swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefMachine][j]);
+        }
+    }
+
+    return false;
+}
+
+bool twoOptLocalSearch(function<int(void)> evaluationFunction) {
+    int currentBest = evaluationFunction();
+
+    for(int i = 0 ; i < machineCount ; i++) {
+        for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
+            for (int k = j + 1 ; k < (int)npmJobAssignement[i].size() ; k++) {
+                reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
+                if(evaluationFunction() < currentBest)
+                    return true;
+                else
+                    reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
+            }
+        }
+    }
+
+    return false;
 }
 
 void singleRun(string inputFileName, ofstream& outputFile, int run) {
@@ -147,7 +230,8 @@ void singleRun(string inputFileName, ofstream& outputFile, int run) {
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    /* solve */
+    /* test */
+    while(jobInsertionLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || jobExchangeLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || twoOptLocalSearch(toolSwitchesEvaluation)){}
 
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 
@@ -249,7 +333,7 @@ void termination() {
 
 template <typename S>
 void printSolution(string inputFileName, double runningTime, int run, S &s) {
-    int totalToolSwitches = 0, totalFlowtime = 0, totalMakespan = 0;
+    int totalToolSwitches = toolSwitchesEvaluation(), totalFlowtime = flowtimeEvaluation(), totalMakespan = makespanEvaluation();
 
     s << "RUN : " << run << " - " << inputFileName << "\n\n";
     for(int i = 0 ; i < machineCount ; i++) {
@@ -265,15 +349,6 @@ void printSolution(string inputFileName, double runningTime, int run, S &s) {
         }
 
         s << "\nJOBS " << npmJobAssignement[i];
-
-        toolSwitchesEvaluation(i);
-        totalToolSwitches += npmCurrentToolSwitches[i];
-        flowtimeEvaluation(i);
-        totalFlowtime += npmCurrentFlowTime[i]; 
-        //makespanEvaluation(i);
-
-        if(npmCurrentMakespan[i] > totalMakespan) 
-            totalMakespan = npmCurrentMakespan[i];
 
         s << "TOOL SWITCHES : " << npmCurrentToolSwitches[i] << endl;
         s << "FLOWTIME : " << npmCurrentFlowTime[i] << endl;
@@ -303,7 +378,7 @@ ostream& operator<<(ostream& os, const vector<T>& vector) {
 template<typename T>
 ostream& operator<<(ostream& out, const vector<vector<T>>& matrix) {
     for(int i = 0 ; i < (int)matrix.size() ; i++) {
-        for(int j = 0 ; j < (int)matrix[0].size() ; j++) {
+        for(int j = 0 ; j < (int)matrix[i].size() ; j++) {
             out << matrix[i][j] << " ";
         }
         out << endl;
