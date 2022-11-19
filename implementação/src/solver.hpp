@@ -162,7 +162,6 @@ bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int>
     int currentBest = evaluationFunction();
     int criticalMachine = distance(evaluationVector.begin(),max_element(evaluationVector.begin(), evaluationVector.end()));
 
-
     for (int i = 0 ; i < (int)npmJobAssignement[criticalMachine].size() ; i++) {
         int jobIndex = npmJobAssignement[criticalMachine][i];
         npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + i);
@@ -222,6 +221,24 @@ bool twoOptLocalSearch(function<int(void)> evaluationFunction) {
     return false;
 }
 
+bool swapLocalSearch(function<int(void)> evaluationFunction) {
+    int currentBest = evaluationFunction();
+
+    for(int i = 0 ; i < machineCount ; i++) {
+        for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
+            for (int k = j + 1 ; k < (int)npmJobAssignement[i].size() ; k++) {
+                swap(npmJobAssignement[i][j], npmJobAssignement[i][k]);
+                if(evaluationFunction() < currentBest)
+                    return true;
+                else
+                    swap(npmJobAssignement[i][j], npmJobAssignement[i][k]);
+            }
+        }
+    }
+
+    return false;
+}
+
 void singleRun(string inputFileName, ofstream& outputFile, int run) {
     double runningTime;
     readProblem(inputFileName);
@@ -231,11 +248,11 @@ void singleRun(string inputFileName, ofstream& outputFile, int run) {
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     /* test */
-    while(jobInsertionLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || jobExchangeLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || twoOptLocalSearch(toolSwitchesEvaluation)){}
+    while(jobInsertionLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || jobExchangeLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || twoOptLocalSearch(toolSwitchesEvaluation) || swapLocalSearch(toolSwitchesEvaluation)){}
 
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 
-  	duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
+  	duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
 	runningTime =  time_span.count();											
 
 	printSolution(inputFileName, runningTime, run, cout);		
