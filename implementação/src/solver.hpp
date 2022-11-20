@@ -46,8 +46,8 @@ bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> 
 
 void singleRun(string inputFileName, ofstream& outputFile, int run);
 
-int machineCount, toolCount, jobCount; /* quantity of machines, tools and jobs. Index of the tool to be substituted */
-vector<vector<int>> npmJobAssignement; /* current jobs and tools assigned to each machine */
+int machineCount, toolCount, jobCount, best; /* quantity of machines, tools and jobs. Index of the tool to be substituted */
+vector<vector<int>> npmJobAssignement, bestSolution; /* current jobs and tools assigned to each machine */
 vector<vector<int>> toolsRequirements; /* all tools and jobs */
 vector<vector<int>> npmJobTime; /* time cost of each job on each machine */
 vector<vector<int>> npmCurrentMagazines; /* current magazines of each machine */
@@ -243,12 +243,22 @@ void singleRun(string inputFileName, ofstream& outputFile, int run) {
     double runningTime;
     readProblem(inputFileName);
 
-    makeInitialRandomSolution();
-
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    /* test */
-    while(jobInsertionLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || jobExchangeLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || twoOptLocalSearch(toolSwitchesEvaluation) || swapLocalSearch(toolSwitchesEvaluation)){}
+    for (int i = 0 ; i < 100 ; i++) {
+        makeInitialRandomSolution();
+        while(jobInsertionLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || 
+                jobExchangeLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || 
+                twoOptLocalSearch(toolSwitchesEvaluation) ||
+                swapLocalSearch(toolSwitchesEvaluation)) {}
+        if (toolSwitchesEvaluation() < best) {
+            best = toolSwitchesEvaluation();
+            bestSolution = npmJobAssignement;
+        }
+        for(auto& v : npmJobAssignement) {
+            v.clear();
+        }
+    }
 
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 
@@ -312,6 +322,8 @@ void initialization() {
         npmCurrentMakespan.push_back(INT_MAX);
         npmCurrentFlowTime.push_back(INT_MAX);
     }
+
+    best = INT_MAX;
 }
 
 void termination() {
@@ -350,7 +362,9 @@ void termination() {
 
 template <typename S>
 void printSolution(string inputFileName, double runningTime, int run, S &s) {
+    npmJobAssignement = bestSolution;
     int totalToolSwitches = toolSwitchesEvaluation(), totalFlowtime = flowtimeEvaluation(), totalMakespan = makespanEvaluation();
+
 
     s << "RUN : " << run << " - " << inputFileName << "\n\n";
     for(int i = 0 ; i < machineCount ; i++) {
