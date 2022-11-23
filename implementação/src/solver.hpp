@@ -1,6 +1,7 @@
 #ifndef SOLVER_HPP
 #define SOLVER_HPP
 
+#include <sys/stat.h>
 #include <random>
 #include <algorithm>
 #include <iostream>
@@ -11,6 +12,7 @@
 #include <chrono>
 #include <cstdio>
 #include <numeric>
+#include <tuple>
 #include <functional>
 
 using namespace std;
@@ -21,7 +23,7 @@ using namespace std::chrono;
 /* I/O */
 void readProblem(string fileName);
 template <typename S>
-void printSolution(string inputFileName, double runningTime, int run, S &s);
+int printSolution(string inputFileName, double runningTime, int objective, int run, S &s);
 template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& v);
 template<typename T>
@@ -43,12 +45,13 @@ int makespanEvaluation();
 bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
 bool twoOptLocalSearch(function<int(void)> evaluationFunction);
 bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
+bool swapLocalSearch(function<int(void)> evaluationFunction);
 
-void singleRun(string inputFileName, ofstream& outputFile, int run);
+int singleRun(string inputFileName, ofstream& outputFile, int run);
 
-int machineCount, toolCount, jobCount, best; /* quantity of machines, tools and jobs. Index of the tool to be substituted */
-vector<vector<int>> npmJobAssignement, bestSolution; /* current jobs and tools assigned to each machine */
-vector<vector<int>> toolsRequirements; /* all tools and jobs */
+int machineCount, toolCount, jobCount, best; /* quantity of machines, tools, jobs and current best solution value */
+vector<vector<int>> npmJobAssignement, bestSolution; /* current jobs and tools assigned to each machine and best solution assignements */
+vector<vector<int>> toolsRequirements; /* jobs and tools requirements */
 vector<vector<int>> npmJobTime; /* time cost of each job on each machine */
 vector<vector<int>> npmCurrentMagazines; /* current magazines of each machine */
 vector<vector<int>> npmToolsNeedDistance; /* current magazines of each machine */
@@ -239,41 +242,82 @@ bool swapLocalSearch(function<int(void)> evaluationFunction) {
     return false;
 }
 
-void singleRun(string inputFileName, ofstream& outputFile, int run) {
-    double runningTime;
-    readProblem(inputFileName);
+vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool) {
+    int j;
+    vector<tuple<int,int>> oneBlocks;
 
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    for(int i = 0 ; i < (int)npmJobAssignement[machineIndex].size() ; i++) {
+        if(toolsRequirements[tool][i]) {
+            j = i;
+            while(toolsRequirements[tool][i]) { i++; }
+            oneBlocks.push_back(tuple<int, int>(j, i - 1));
+        }
+    }
+    
+    return oneBlocks;
+}
 
-    for (int i = 0 ; i < 100 ; i++) {
+void multiStartRandom(function<int(void)> evaluationFunction, vector<int> evaluationVector) {
+    for (int i = 0 ; i < 200 ; i++) {
         makeInitialRandomSolution();
-        while(jobInsertionLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || 
-                jobExchangeLocalSearch(toolSwitchesEvaluation, npmCurrentToolSwitches) || 
-                twoOptLocalSearch(toolSwitchesEvaluation) ||
-                swapLocalSearch(toolSwitchesEvaluation)) {}
-        if (toolSwitchesEvaluation() < best) {
-            best = toolSwitchesEvaluation();
+        while(jobInsertionLocalSearch(evaluationFunction, evaluationVector) || 
+                jobExchangeLocalSearch(evaluationFunction, evaluationVector) || 
+                twoOptLocalSearch(evaluationFunction) ||
+                swapLocalSearch(evaluationFunction)) {}
+        if (evaluationFunction() < best) {
+            best = evaluationFunction();
             bestSolution = npmJobAssignement;
         }
         for(auto& v : npmJobAssignement) {
             v.clear();
         }
     }
+}
+
+int singleRun(string inputFileName, ofstream& outputFile, int run, int objective) {
+    double runningTime;
+    int result;
+    function<int(void)> evaluationFunction;
+    vector<int> evaluationVector;
+    readProblem(inputFileName);
+
+    switch(objective) {
+        case 1:
+            evaluationFunction = toolSwitchesEvaluation;
+            evaluationVector = npmCurrentToolSwitches;
+            break;
+        case 2:
+            evaluationFunction = makespanEvaluation;
+            evaluationVector = npmCurrentMakespan;
+            break;
+        case 3:
+            evaluationFunction = flowtimeEvaluation;
+            evaluationVector = npmCurrentFlowTime;
+            break;
+    }
+
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
+    multiStartRandom(evaluationFunction, evaluationVector);
 
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 
   	duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
 	runningTime =  time_span.count();											
 
-	printSolution(inputFileName, runningTime, run, cout);		
-	printSolution(inputFileName, runningTime, run, outputFile);		
+	result = printSolution(inputFileName, runningTime, objective, run, cout);		
+	result = printSolution(inputFileName, runningTime, objective, run, outputFile);		
 
-	termination();																
+	termination();
+
+    return result;												
 }
 
 /* Reads the problem from a file specified by fileName */
 void readProblem(string fileName) {
 	ifstream fpIn(fileName);
+    if(!fpIn)
+        throw invalid_argument("ERROR : Instance " + fileName + "doesn't exist");
     int aux;
 
     fpIn >> machineCount >> jobCount >> toolCount;
@@ -361,10 +405,9 @@ void termination() {
 }
 
 template <typename S>
-void printSolution(string inputFileName, double runningTime, int run, S &s) {
+int printSolution(string inputFileName, double runningTime, int objective, int run, S &s) {
     npmJobAssignement = bestSolution;
     int totalToolSwitches = toolSwitchesEvaluation(), totalFlowtime = flowtimeEvaluation(), totalMakespan = makespanEvaluation();
-
 
     s << "RUN : " << run << " - " << inputFileName << "\n\n";
     for(int i = 0 ; i < machineCount ; i++) {
@@ -392,6 +435,13 @@ void printSolution(string inputFileName, double runningTime, int run, S &s) {
     s << "--- TOTAL MAKESPAN : " << totalMakespan << endl;
     s << "--- RUNNING TIME : " << runningTime << "\n\n";
     s << "# -------------------------- #\n";
+
+    switch(objective) {
+        case 1: return totalToolSwitches;
+        case 2: return totalMakespan;
+        case 3: return totalFlowtime;
+        default: return INT_MAX;
+    }
 }
 
 template <typename T>
@@ -416,6 +466,16 @@ ostream& operator<<(ostream& out, const vector<vector<T>>& matrix) {
     }
     out << endl;
     return out;
+}
+
+bool fileExists(const std::string& filename)
+{
+    struct stat buf;
+    if (stat(filename.c_str(), &buf) != -1)
+    {
+        return true;
+    }
+    return false;
 }
 
 #endif
