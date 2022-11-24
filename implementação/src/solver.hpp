@@ -21,6 +21,7 @@ using namespace std::chrono;
 #define PRINT_MATRIX true
 
 /* I/O */
+void validateArguments (int argc, char* argv[]);
 void readProblem(string fileName);
 template <typename S>
 int printSolution(string inputFileName, double runningTime, int objective, int run, S &s);
@@ -182,6 +183,7 @@ bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int>
             }
             npmJobAssignement[j].pop_back();
         }
+        
         npmJobAssignement[criticalMachine].insert(npmJobAssignement[criticalMachine].begin() + i, jobIndex);
     }
 
@@ -191,15 +193,15 @@ bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int>
 bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector) {
     int currentBest = evaluationFunction();
     int criticalMachine = distance(evaluationVector.begin(),max_element(evaluationVector.begin(), evaluationVector.end()));
-    int briefMachine = distance(evaluationVector.begin(),min_element(evaluationVector.begin(), evaluationVector.end()));
+    int briefestMachine = distance(evaluationVector.begin(),min_element(evaluationVector.begin(), evaluationVector.end()));
 
     for(int i = 0 ; i < (int)npmJobAssignement[criticalMachine].size() ; i++) {
-        for (int j = 0 ; j < (int)npmJobAssignement[briefMachine].size() ; j++) {
-            swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefMachine][j]);
+        for (int j = 0 ; j < (int)npmJobAssignement[briefestMachine].size() ; j++) {
+            swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefestMachine][j]);
             if(evaluationFunction() < currentBest)
                     return true;
             else
-                swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefMachine][j]);
+                swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefestMachine][j]);
         }
     }
 
@@ -257,10 +259,10 @@ vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool) {
     return oneBlocks;
 }
 
-void multiStartRandom(function<int(void)> evaluationFunction, vector<int> evaluationVector) {
-    for (int i = 0 ; i < 200 ; i++) {
+void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+    for (int i = 0 ; i < 100 ; i++) {
         makeInitialRandomSolution();
-        while(jobInsertionLocalSearch(evaluationFunction, evaluationVector) || 
+        while(jobInsertionLocalSearch(evaluationFunction, evaluationVector)  || 
                 jobExchangeLocalSearch(evaluationFunction, evaluationVector) || 
                 twoOptLocalSearch(evaluationFunction) ||
                 swapLocalSearch(evaluationFunction)) {}
@@ -277,28 +279,21 @@ void multiStartRandom(function<int(void)> evaluationFunction, vector<int> evalua
 int singleRun(string inputFileName, ofstream& outputFile, int run, int objective) {
     double runningTime;
     int result;
-    function<int(void)> evaluationFunction;
-    vector<int> evaluationVector;
     readProblem(inputFileName);
-
-    switch(objective) {
-        case 1:
-            evaluationFunction = toolSwitchesEvaluation;
-            evaluationVector = npmCurrentToolSwitches;
-            break;
-        case 2:
-            evaluationFunction = makespanEvaluation;
-            evaluationVector = npmCurrentMakespan;
-            break;
-        case 3:
-            evaluationFunction = flowtimeEvaluation;
-            evaluationVector = npmCurrentFlowTime;
-            break;
-    }
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    multiStartRandom(evaluationFunction, evaluationVector);
+    switch(objective) {
+        case 1:
+            multiStartRandom(toolSwitchesEvaluation, npmCurrentToolSwitches);
+            break;
+        case 2:
+            multiStartRandom(makespanEvaluation, npmCurrentMakespan);
+            break;
+        case 3:
+            multiStartRandom(flowtimeEvaluation, npmCurrentFlowTime);
+            break;
+    }
 
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 
