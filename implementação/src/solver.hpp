@@ -41,6 +41,7 @@ int toolsDistances (int machineIndex, int currentJob, int currentTool, int jobAs
 int toolSwitchesEvaluation();
 int flowtimeEvaluation();
 int makespanEvaluation();
+bool checkJobEligibility(int machineIndex, int job);
 
 /* Local search methods */
 bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
@@ -49,6 +50,8 @@ bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> 
 bool swapLocalSearch(function<int(void)> evaluationFunction);
 
 int singleRun(string inputFileName, ofstream& outputFile, int run);
+void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 
 int machineCount, toolCount, jobCount, best; /* quantity of machines, tools, jobs and current best solution value */
 vector<vector<int>> npmJobAssignement, bestSolution; /* current jobs and tools assigned to each machine and best solution assignements */
@@ -130,8 +133,25 @@ int toolSwitchesEvaluation() {
 int flowtimeEvaluation() {
     for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
         npmCurrentFlowTime[machineIndex] = 0;
-        for(int i = 0 ; i < (int)npmJobAssignement[machineIndex].size() ; i++)
+        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
+
+        int currentJob = fillStartMagazine(machineIndex, jobsAssignedCount);
+        for(int i = 0 ; i < currentJob ; i++)
             npmCurrentFlowTime[machineIndex] += npmJobTime[machineIndex][npmJobAssignement[machineIndex][i]];
+
+        for(int i = currentJob ; i < jobsAssignedCount ; i++) {
+            fillToolsDistances(machineIndex, i, jobsAssignedCount);
+            int toolSwitches = 0;
+            for(int j = 0 ; j < toolCount ; j++) {
+                if(toolsRequirements[j][npmJobAssignement[machineIndex][i]] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
+                    int indexToolChange = distance(npmToolsNeedDistance[machineIndex].begin(),max_element(npmToolsNeedDistance[machineIndex].begin(), npmToolsNeedDistance[machineIndex].end()));
+                    npmCurrentMagazines[machineIndex][indexToolChange] = j;
+                    npmToolsNeedDistance[machineIndex][indexToolChange] = 0;
+                    toolSwitches++;
+                } 
+            }
+            npmCurrentFlowTime[machineIndex] += (npmSwitchCost[machineIndex] * toolSwitches) + npmJobTime[machineIndex][npmJobAssignement[machineIndex][i]];
+        }
     }
 
     return accumulate(npmCurrentFlowTime.begin(),npmCurrentFlowTime.end(),0);
@@ -158,8 +178,14 @@ void makeInitialRandomSolution() {
     mt19937 rng(random_device{}());
     shuffle(r.begin(), r.end(), rng);
 
-    for (int i = 0 ; i < jobCount ; i++)
-        npmJobAssignement[i % machineCount].push_back(r[i]);
+    int i = 0;
+    while (!r.empty()) {
+        if (checkJobEligibility(i % machineCount, r[0])) {
+            npmJobAssignement[i % machineCount].push_back(r[0]);
+            r.erase(r.begin());
+        }
+        i++;
+    }
 }
 
 bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector) {
@@ -172,6 +198,8 @@ bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int>
 
         for(int j = 0 ; j < machineCount ; j++) {
             if (j == criticalMachine)
+                continue;
+            if (!checkJobEligibility(j, jobIndex))
                 continue;
             npmJobAssignement[j].insert(npmJobAssignement[j].begin(), jobIndex);
             if(evaluationFunction() < currentBest)
@@ -197,11 +225,13 @@ bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> 
 
     for(int i = 0 ; i < (int)npmJobAssignement[criticalMachine].size() ; i++) {
         for (int j = 0 ; j < (int)npmJobAssignement[briefestMachine].size() ; j++) {
-            swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefestMachine][j]);
-            if(evaluationFunction() < currentBest)
-                    return true;
-            else
+            if (checkJobEligibility(criticalMachine, npmJobAssignement[briefestMachine][j]) && checkJobEligibility(briefestMachine, npmJobAssignement[criticalMachine][i])) {
                 swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefestMachine][j]);
+                if(evaluationFunction() < currentBest)
+                        return true;
+                else
+                    swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefestMachine][j]);
+            }
         }
     }
 
@@ -276,6 +306,26 @@ void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evalu
     }
 }
 
+void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+    int k = 1;
+    while (k != 5) {
+        switch(k) {
+            case 1 : 
+                k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                break;
+            case 2 : 
+                k = jobExchangeLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                break;
+            case 3 :
+                k = twoOptLocalSearch(evaluationFunction) ? 1 : k + 1;
+                break;
+            case 4 :
+                k = swapLocalSearch(evaluationFunction) ? 1 : k + 1;
+                break;
+        }
+    }
+}
+
 int singleRun(string inputFileName, ofstream& outputFile, int run, int objective) {
     double runningTime;
     int result;
@@ -283,15 +333,16 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
+    makeInitialRandomSolution();
     switch(objective) {
         case 1:
-            multiStartRandom(toolSwitchesEvaluation, npmCurrentToolSwitches);
+            VND(toolSwitchesEvaluation, npmCurrentToolSwitches);
             break;
         case 2:
-            multiStartRandom(makespanEvaluation, npmCurrentMakespan);
+            VND(makespanEvaluation, npmCurrentMakespan);
             break;
         case 3:
-            multiStartRandom(flowtimeEvaluation, npmCurrentFlowTime);
+            VND(flowtimeEvaluation, npmCurrentFlowTime);
             break;
     }
 
@@ -342,6 +393,13 @@ void readProblem(string fileName) {
             toolsRequirements[i].push_back(aux);
         }
     }
+}
+
+bool checkJobEligibility(int machineIndex, int job) {
+    int sum = 0;
+    for(int i = 0 ; i < toolCount ; i++)
+        sum += toolsRequirements[i][job];
+    return (npmMagazineCapacity[machineIndex] >= sum);
 }
 
 void initialization() {
@@ -401,7 +459,6 @@ void termination() {
 
 template <typename S>
 int printSolution(string inputFileName, double runningTime, int objective, int run, S &s) {
-    npmJobAssignement = bestSolution;
     int totalToolSwitches = toolSwitchesEvaluation(), totalFlowtime = flowtimeEvaluation(), totalMakespan = makespanEvaluation();
 
     s << "RUN : " << run << " - " << inputFileName << "\n\n";
