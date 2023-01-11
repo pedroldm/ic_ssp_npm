@@ -14,6 +14,7 @@
 #include <numeric>
 #include <tuple>
 #include <functional>
+#include <set>
 
 using namespace std;
 using namespace std::chrono;
@@ -29,12 +30,16 @@ template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& v);
 template<typename T>
 ostream& operator<< (ostream& out, const vector<vector<T>>& matrix);
+template<typename T>
+ostream& operator<<(ostream& out, const set<T>& m);
 
 /* Initializes and terminates all data structures */
 void initialization();
 void termination();
 
 /* Evaluation functions */
+int GCPA();
+tuple<int, int> fillStartMagazineGCPA(int machineIndex, int jobsAssignedCount);
 int fillStartMagazine(int machineIndex, int jobsAssignedCount);
 void fillToolsDistances(int machineIndex, int currentJob, int jobAssignedCount);
 int toolsDistances (int machineIndex, int currentJob, int currentTool, int jobAssignedCount);
@@ -64,6 +69,59 @@ vector<int> npmSwitchCost; /* switch cost of each machine */
 vector<int> npmCurrentToolSwitches; /* current switches count of each machine */
 vector<int> npmCurrentMakespan; /* current makespan of each machine */
 vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
+set<int> m1, m2, difference;
+
+int GCPA() {
+    for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
+        npmCurrentToolSwitches[machineIndex] = 0;
+        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
+        tuple <int,int> firstStop = fillStartMagazineGCPA(machineIndex, jobsAssignedCount);
+
+        for(int i = get<0>(firstStop) ; i < jobsAssignedCount; i++) {
+            for(int j = get<1>(firstStop) ; j < toolCount ; j++) {
+                if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
+                    if((int)m2.size() < npmMagazineCapacity[machineIndex]) 
+                        m2.insert(j);
+                    else {
+                        difference.clear();
+                        set_difference(m2.begin(), m2.end(), m1.begin(), m1.end(), inserter(difference, difference.end()));
+                        npmCurrentToolSwitches[machineIndex] += difference.size();
+                        m1 = m2;
+                        m2.clear();
+                    }
+                }
+            }
+        }
+
+        if (m2.size()) {
+            difference.clear();
+            set_difference(m2.begin(), m2.end(), m1.begin(), m1.end(), inserter(difference, difference.end()));
+            npmCurrentToolSwitches[machineIndex] += difference.size();
+            m1 = m2;
+            m2.clear();
+        }
+    }
+
+    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
+}
+
+tuple<int, int> fillStartMagazineGCPA(int machineIndex, int jobsAssignedCount) {
+    m1.clear();
+    m2.clear();
+
+    for(int i = 0 ; i < jobsAssignedCount; i++) {
+        for(int j = 0 ; j < toolCount ; j++) {
+            if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
+                if((int)m1.size() < npmMagazineCapacity[machineIndex]) {
+                    m1.insert(j);
+                }
+                else 
+                    return tuple<int,int>(i, j);
+            }
+        }
+    }
+    return tuple<int, int>(INT_MAX, INT_MAX);
+}
 
 int fillStartMagazine(int machineIndex, int jobsAssignedCount) {
     int i, j, aux = 0;
@@ -127,7 +185,7 @@ int toolSwitchesEvaluation() {
         }
     }
 
-    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
+    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(), 0);
 }
 
 int flowtimeEvaluation() {
@@ -517,6 +575,16 @@ ostream& operator<<(ostream& out, const vector<vector<T>>& matrix) {
         out << endl;
     }
     out << endl;
+    return out;
+}
+
+template<typename T>
+ostream& operator<<(ostream& out, const set<T>& m) {
+    out << "[ ";
+    for (auto& c : m) {
+        out << c << ' ';
+    }
+    out << "]" << endl;
     return out;
 }
 
