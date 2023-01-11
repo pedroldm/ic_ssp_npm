@@ -69,58 +69,45 @@ vector<int> npmSwitchCost; /* switch cost of each machine */
 vector<int> npmCurrentToolSwitches; /* current switches count of each machine */
 vector<int> npmCurrentMakespan; /* current makespan of each machine */
 vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
-set<int> m1, m2, difference;
+vector<set<int>> m;
 
 int GCPA() {
-    for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
+    for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
+        int aux = 0, jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
         npmCurrentToolSwitches[machineIndex] = 0;
-        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
-        tuple <int,int> firstStop = fillStartMagazineGCPA(machineIndex, jobsAssignedCount);
+        for(auto &s : m)
+            s.clear();
 
-        for(int i = get<0>(firstStop) ; i < jobsAssignedCount; i++) {
-            for(int j = get<1>(firstStop) ; j < toolCount ; j++) {
+        for(int i = 0 ; i < jobsAssignedCount ; i++) {
+            for(int j = 0 ; j < toolCount ; j++) {
                 if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
-                    if((int)m2.size() < npmMagazineCapacity[machineIndex]) 
-                        m2.insert(j);
+                    if((int)m[aux].size() < npmMagazineCapacity[machineIndex]) {
+                        m[aux].insert(j);
+                    }
                     else {
-                        difference.clear();
-                        set_difference(m2.begin(), m2.end(), m1.begin(), m1.end(), inserter(difference, difference.end()));
-                        npmCurrentToolSwitches[machineIndex] += difference.size();
-                        m1 = m2;
-                        m2.clear();
+                        if(aux) {
+                            m[2].clear();
+                            set_difference(m[1].begin(), m[1].end(), m[0].begin(), m[0].end(), inserter(m[2], m[2].end()));
+                            npmCurrentToolSwitches[machineIndex] += m[2].size();
+                            m[0] = m[1];
+                            m[1].clear();
+                            m[1].insert(j);
+                        }
+                        else {
+                            aux = !aux;
+                            m[aux].insert(j);
+                        }
                     }
                 }
             }
         }
 
-        if (m2.size()) {
-            difference.clear();
-            set_difference(m2.begin(), m2.end(), m1.begin(), m1.end(), inserter(difference, difference.end()));
-            npmCurrentToolSwitches[machineIndex] += difference.size();
-            m1 = m2;
-            m2.clear();
-        }
+        m[2].clear();
+        set_difference(m[1].begin(), m[1].end(), m[0].begin(), m[0].end(), inserter(m[2], m[2].end()));
+        npmCurrentToolSwitches[machineIndex] += m[2].size();
     }
 
     return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
-}
-
-tuple<int, int> fillStartMagazineGCPA(int machineIndex, int jobsAssignedCount) {
-    m1.clear();
-    m2.clear();
-
-    for(int i = 0 ; i < jobsAssignedCount; i++) {
-        for(int j = 0 ; j < toolCount ; j++) {
-            if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
-                if((int)m1.size() < npmMagazineCapacity[machineIndex]) {
-                    m1.insert(j);
-                }
-                else 
-                    return tuple<int,int>(i, j);
-            }
-        }
-    }
-    return tuple<int, int>(INT_MAX, INT_MAX);
 }
 
 int fillStartMagazine(int machineIndex, int jobsAssignedCount) {
@@ -392,6 +379,7 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     makeInitialRandomSolution();
+
     switch(objective) {
         case 1:
             VND(toolSwitchesEvaluation, npmCurrentToolSwitches);
@@ -477,6 +465,8 @@ void initialization() {
         npmCurrentMakespan.push_back(INT_MAX);
         npmCurrentFlowTime.push_back(INT_MAX);
     }
+
+    m.resize(3);
 
     best = INT_MAX;
 }
