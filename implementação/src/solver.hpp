@@ -38,10 +38,11 @@ void initialization();
 void termination();
 
 /* Evaluation functions */
-int GCPA();
-tuple<int, int> fillStartMagazineGCPA(int machineIndex, int jobsAssignedCount);
+int GPCA();
 int fillStartMagazine(int machineIndex, int jobsAssignedCount);
+void fillToolsDistancesGPCA(int machineIndex, int jobsAssignedCount);
 void fillToolsDistances(int machineIndex, int currentJob, int jobAssignedCount);
+int fillStartMagazineGPCA(int machineIndex, int jobsAssignedCount);
 int toolsDistances (int machineIndex, int currentJob, int currentTool, int jobAssignedCount);
 int toolSwitchesEvaluation();
 int flowtimeEvaluation();
@@ -70,44 +71,83 @@ vector<int> npmCurrentToolSwitches; /* current switches count of each machine */
 vector<int> npmCurrentMakespan; /* current makespan of each machine */
 vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
 vector<set<int>> m;
+vector<vector<int>> toolsDistanceGPCA;
 
-int GCPA() {
+int GPCA() {
     for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
-        int aux = 0, jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
+        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size(), empty = 0, minor;
         npmCurrentToolSwitches[machineIndex] = 0;
-        for(auto &s : m)
+        for(auto &s : m) // sets
             s.clear();
-
-        for(int i = 0 ; i < jobsAssignedCount ; i++) {
-            for(int j = 0 ; j < toolCount ; j++) {
-                if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
-                    if((int)m[aux].size() < npmMagazineCapacity[machineIndex]) {
-                        m[aux].insert(j);
-                    }
-                    else {
-                        if(aux) {
-                            m[2].clear();
-                            set_difference(m[1].begin(), m[1].end(), m[0].begin(), m[0].end(), inserter(m[2], m[2].end()));
-                            npmCurrentToolSwitches[machineIndex] += m[2].size();
-                            m[0] = m[1];
-                            m[1].clear();
-                            m[1].insert(j);
-                        }
-                        else {
-                            aux = !aux;
-                            m[aux].insert(j);
-                        }
-                    }
-                }
-            }
+        for(auto &v : toolsDistanceGPCA) { // matriz de distancias
+            v.resize(jobsAssignedCount);
+            fill(v.begin(), v.end(), INT_MAX);
         }
 
-        m[2].clear();
-        set_difference(m[1].begin(), m[1].end(), m[0].begin(), m[0].end(), inserter(m[2], m[2].end()));
-        npmCurrentToolSwitches[machineIndex] += m[2].size();
+        int startMagazine = fillStartMagazineGPCA(machineIndex, jobsAssignedCount);
+        fillToolsDistancesGPCA(machineIndex, jobsAssignedCount);
+
+        for(int i = startMagazine ; i < jobsAssignedCount ; i++) {
+            for(int j = 0 ; j < toolCount ; j++) {
+                if(toolsRequirements[j][npmJobAssignement[machineIndex][i]])
+                    m[1].insert(j);
+            }
+            empty = npmMagazineCapacity[machineIndex] - m[1].size();
+            while(empty--) {
+                m[2].clear();
+                set_difference(m[0].begin(), m[0].end(), m[1].begin(), m[1].end(), inserter(m[2], m[2].end()));
+                minor = *m[2].begin();
+                for(auto k : m[2]) {
+                    if(toolsDistanceGPCA[k][i] < toolsDistanceGPCA[minor][i] && m[1].find(k) == m[1].end())
+                        minor = k;
+                }
+                m[1].insert(minor);
+            }
+            m[2].clear();
+            set_difference(m[1].begin(), m[1].end(), m[0].begin(), m[0].end(), inserter(m[2], m[2].end()));
+            npmCurrentToolSwitches[machineIndex] += m[2].size();
+            m[0] = m[1];
+            m[1].clear();
+        }
     }
 
     return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
+}
+
+void fillToolsDistancesGPCA(int machineIndex, int jobsAssignedCount) {
+    for(int i = 0 ; i < toolCount ; i++) {
+        if(toolsRequirements[i][npmJobAssignement[machineIndex][jobsAssignedCount - 1]])
+            toolsDistanceGPCA[i][jobsAssignedCount - 1] = jobsAssignedCount - 1;
+    }
+
+    for(int i = jobsAssignedCount - 2 ; i >= 0 ; i--) {
+        for(int j = 0 ; j < toolCount ; j++) {
+            if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
+                toolsDistanceGPCA[j][i] = i;
+            }
+            else {
+                toolsDistanceGPCA[j][i] = toolsDistanceGPCA[j][i + 1];
+            }
+        }
+    }
+}
+
+int fillStartMagazineGPCA(int machineIndex, int jobsAssignedCount) {
+    int i, j;
+
+    for(i = 0 ; i < jobsAssignedCount ; i++) {
+        for(j = 0 ; j < toolCount ; j++) {
+            if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
+                if((int)m[0].size() < npmMagazineCapacity[machineIndex]) {
+                    m[0].insert(j);
+                }
+                else
+                    return i;
+            }
+        }
+    }
+
+    return i;
 }
 
 int fillStartMagazine(int machineIndex, int jobsAssignedCount) {
@@ -133,7 +173,6 @@ int fillStartMagazine(int machineIndex, int jobsAssignedCount) {
 }
 
 void fillToolsDistances(int machineIndex, int currentJob, int jobAssignedCount) {
-    
     for(int i = 0 ; i < npmMagazineCapacity[machineIndex] ; i++) {
         npmToolsNeedDistance[machineIndex][i] = toolsDistances(machineIndex, currentJob, npmCurrentMagazines[machineIndex][i], jobAssignedCount);
     }
@@ -452,6 +491,7 @@ void initialization() {
     toolsRequirements.resize(toolCount);
     npmJobTime.resize(machineCount);
     npmJobAssignement.resize(machineCount);
+    toolsDistanceGPCA.resize(toolCount);
 
     npmCurrentMagazines.resize(machineCount);
     npmToolsNeedDistance.resize(machineCount);
