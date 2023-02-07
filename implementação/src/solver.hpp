@@ -49,7 +49,8 @@ int makespanEvaluation();
 int GPCA();
 void fillToolsDistancesGPCA(int machineIndex, int jobCount);
 int fillStartMagazineGPCA(int machineIndex, int jobsAssignedCount);
-bool checkJobEligibility(int machineIndex, int job);
+int checkJobEligibility(int machineIndex, int job);
+void checkMachinesEligibility();
 
 /* Local search methods */
 bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
@@ -74,23 +75,42 @@ vector<int> npmCurrentMakespan; /* current makespan of each machine */
 vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
 vector<set<int>> jobSets;
 vector<set<int>> magazines;
+set<tuple<int, int>> dist;
 vector<vector<int>> toolsDistancesGPCA;
+vector<vector<int>> jobEligibility;
 
 int GPCA() {
     for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
-        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
+        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size(), empty;
+        npmCurrentToolSwitches[machineIndex] = 0;
 
         fillToolsDistancesGPCA(machineIndex, jobsAssignedCount);
         int startSwitch = fillStartMagazineGPCA(machineIndex, jobsAssignedCount);
 
         for(int i = startSwitch ; i < jobsAssignedCount ; i++) {
             magazines[1].insert(jobSets[npmJobAssignement[machineIndex][i]].begin(), jobSets[npmJobAssignement[machineIndex][i]].end());
+            empty = npmMagazineCapacity[machineIndex] - magazines[1].size();
             for(auto t : magazines[0]) {
                 if(!toolsRequirements[t][npmJobAssignement[machineIndex][i]])
-                    /* --- */
+                    dist.insert(make_tuple(toolsDistancesGPCA[t][i], t));
             }
+            npmCurrentToolSwitches[machineIndex] += dist.size() - empty;
+
+            if(empty) {
+                for(auto t : dist) {
+                    magazines[1].insert(get<1>(t));
+                    if(!--empty)
+                        break;
+                }
+            }
+            magazines[0] = magazines[1];
+            magazines[1].clear();
+            dist.clear();
         }
+        magazines[0].clear();
     }
+
+    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
 }
 
 int fillStartMagazineGPCA(int machineIndex, int jobsAssignedCount) {
@@ -102,6 +122,7 @@ int fillStartMagazineGPCA(int machineIndex, int jobsAssignedCount) {
                 return i;
         }
     }
+    return INT_MAX;
 }
 
 void fillToolsDistancesGPCA(int machineIndex, int jobsAssignedCount) {
@@ -236,7 +257,7 @@ void makeInitialRandomSolution() {
 
     int i = 0;
     while (!r.empty()) {
-        if (checkJobEligibility(i % machineCount, r[0])) {
+        if (jobEligibility[i % machineCount][r[0]]) {
             npmJobAssignement[i % machineCount].push_back(r[0]);
             r.erase(r.begin());
         }
@@ -255,7 +276,7 @@ bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int>
         for(int j = 0 ; j < machineCount ; j++) {
             if (j == criticalMachine)
                 continue;
-            if (!checkJobEligibility(j, jobIndex))
+            if (!jobEligibility[j][jobIndex])
                 continue;
             npmJobAssignement[j].insert(npmJobAssignement[j].begin(), jobIndex);
             if(evaluationFunction() < currentBest)
@@ -281,7 +302,7 @@ bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> 
 
     for(int i = 0 ; i < (int)npmJobAssignement[criticalMachine].size() ; i++) {
         for (int j = 0 ; j < (int)npmJobAssignement[briefestMachine].size() ; j++) {
-            if (checkJobEligibility(criticalMachine, npmJobAssignement[briefestMachine][j]) && checkJobEligibility(briefestMachine, npmJobAssignement[criticalMachine][i])) {
+            if (jobEligibility[criticalMachine][npmJobAssignement[briefestMachine][j]] && jobEligibility[briefestMachine][npmJobAssignement[criticalMachine][i]]) {
                 swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[briefestMachine][j]);
                 if(evaluationFunction() < currentBest)
                         return true;
@@ -386,12 +407,9 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
     double runningTime;
     int result;
     readProblem(inputFileName);
+    checkMachinesEligibility();
 
-    //makeInitialRandomSolution();
-    for(int i = 0 ; i < jobCount ; i++) {
-        for (int j = 0 ; j < machineCount ; j++)
-            npmJobAssignement[j].push_back(i);
-    }
+    makeInitialRandomSolution();
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
@@ -456,13 +474,22 @@ void readProblem(string fileName) {
                 jobSets[j].insert(i);
         }
     }
+
 }
 
-bool checkJobEligibility(int machineIndex, int job) {
+int checkJobEligibility(int machineIndex, int job) {
     int sum = 0;
     for(int i = 0 ; i < toolCount ; i++)
         sum += toolsRequirements[i][job];
-    return (npmMagazineCapacity[machineIndex] >= sum);
+    return (npmMagazineCapacity[machineIndex] >= sum) ? 1 : 0;
+}
+
+void checkMachinesEligibility() {
+    for(int i = 0 ; i < machineCount ; i++) {
+        for(int j = 0 ; j < jobCount ; j++) {
+            jobEligibility[i][j] = checkJobEligibility(i, j);
+        }
+    }
 }
 
 void initialization() {
@@ -483,11 +510,15 @@ void initialization() {
         npmCurrentFlowTime.push_back(INT_MAX);
     }
 
+    jobEligibility.resize(machineCount);
+    for(int i = 0 ; i < machineCount ; i++)
+        jobEligibility[i].resize(jobCount);
+
     jobSets.resize(jobCount);
     toolsDistancesGPCA.resize(toolCount);
     for(int i = 0 ; i < toolCount ; i++)
         toolsDistancesGPCA[i].resize(jobCount);
-    magazines.resize(3);
+    magazines.resize(2);
 
     best = INT_MAX;
 }
@@ -605,7 +636,7 @@ ostream& operator<<(ostream& out, const set<T>& m) {
 bool fileExists(const std::string& filename)
 {
     struct stat buf;
-    return (stat(filename.c_str(), &buf) != -1)
+    return (stat(filename.c_str(), &buf) != -1);
 }
 
 #endif
