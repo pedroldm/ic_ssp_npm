@@ -287,6 +287,41 @@ vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool) {
     return oneBlocks;
 }
 
+bool oneBlockLocalSearch(function<int(void)> evaluationFunction) {
+    int currentBest = evaluationFunction(), itAux, job;
+    vector<tuple<int,int>> oneBlocks;
+
+    for(int i = 0 ; i < machineCount ; i++) {
+        for(int j = 0 ; j < toolCount ; j++) {
+            oneBlocks = findOneBlocks(i, j);
+            for(int k = 0 ; k < (int)oneBlocks.size() ; k++) {
+                for(int l = 0 ; l < (int)oneBlocks.size() ; l++) {
+                    if (k == l)
+                        continue;
+                    for(int m = get<0>(oneBlocks[k]) ; m <= get<1>(oneBlocks[k]) ; m++) {
+                        job = npmJobAssignement[i][m];
+                        itAux = (k > l) ? -1 : 0;
+                        npmJobAssignement[i].erase(npmJobAssignement[i].begin() + m);
+                        npmJobAssignement[i].insert(npmJobAssignement[i].begin() + get<0>(oneBlocks[l]) + itAux, job);
+                        if(evaluationFunction() < currentBest)
+                            return true;
+                        else {
+                            for(int n = get<0>(oneBlocks[l]) ; n < get<1>(oneBlocks[l]) ; n++) {
+                                swap(npmJobAssignement[i][n], npmJobAssignement[i][n + 1]);
+                                if(evaluationFunction() < currentBest)
+                                    return true;
+                            }
+                        }
+                        npmJobAssignement[i].erase(npmJobAssignement[i].begin() + get<1>(oneBlocks[l]));
+                        npmJobAssignement[i].insert(npmJobAssignement[i].begin() + m, job);
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     for (int i = 0 ; i < 100 ; i++) {
         makeInitialRandomSolution();
@@ -336,7 +371,7 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
 
     switch(objective) {
         case 1:
-            VND(KTNS, npmCurrentToolSwitches);
+            VND(GPCA, npmCurrentToolSwitches);
             break;
     }
 
@@ -544,8 +579,7 @@ ostream& operator<<(ostream& out, const set<T>& m) {
     return out;
 }
 
-bool fileExists(const std::string& filename)
-{
+bool fileExists(const std::string& filename) {
     struct stat buf;
     return (stat(filename.c_str(), &buf) != -1);
 }
