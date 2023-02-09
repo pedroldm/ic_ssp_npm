@@ -23,7 +23,27 @@ using namespace std::chrono;
 
 #define PRINT_MATRIX true
 
+/* Evaluation functions */
+int toolsDistances(int machineIndex, int currentJob, int currentTool, int jobAssignedCount);
+int GPCA();
+int KTNS();
+int replacedTool(int i);
+void fillToolsDistances(int machineIndex, int jobCount);
+int fillStartMagazine(int machineIndex, int jobsAssignedCount);
+int checkJobEligibility(int machineIndex, int job);
+void checkMachinesEligibility();
+
+/* Local search methods */
+bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
+bool twoOptLocalSearch(function<int(void)> evaluationFunction);
+bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
+bool swapLocalSearch(function<int(void)> evaluationFunction);
+
+void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+
 /* I/O */
+int singleRun(string inputFileName, ofstream& outputFile, int run);
 void validateArguments (int argc, char* argv[]);
 void readProblem(string fileName);
 template <typename S>
@@ -38,29 +58,6 @@ ostream& operator<<(ostream& out, const set<T>& m);
 /* Initializes and terminates all data structures */
 void initialization();
 void termination();
-
-/* Evaluation functions */
-int fillStartMagazine(int machineIndex, int jobsAssignedCount);
-void fillToolsDistances(int machineIndex, int currentJob, int jobAssignedCount);
-int toolsDistances (int machineIndex, int currentJob, int currentTool, int jobAssignedCount);
-int toolSwitchesEvaluation();
-int flowtimeEvaluation();
-int makespanEvaluation();
-int GPCA();
-void fillToolsDistancesGPCA(int machineIndex, int jobCount);
-int fillStartMagazineGPCA(int machineIndex, int jobsAssignedCount);
-int checkJobEligibility(int machineIndex, int job);
-void checkMachinesEligibility();
-
-/* Local search methods */
-bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
-bool twoOptLocalSearch(function<int(void)> evaluationFunction);
-bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
-bool swapLocalSearch(function<int(void)> evaluationFunction);
-
-int singleRun(string inputFileName, ofstream& outputFile, int run);
-void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
-void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 
 int machineCount, toolCount, jobCount, best; /* quantity of machines, tools, jobs and current best solution value */
 vector<vector<int>> npmJobAssignement, bestSolution; /* current jobs and tools assigned to each machine and best solution assignements */
@@ -81,39 +78,38 @@ vector<vector<int>> jobEligibility;
 
 int GPCA() {
     for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
-        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size(), empty;
+        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size(), empty; /* .size() -> O(1)*/
         npmCurrentToolSwitches[machineIndex] = 0;
 
-        fillToolsDistancesGPCA(machineIndex, jobsAssignedCount);
-        int startSwitch = fillStartMagazineGPCA(machineIndex, jobsAssignedCount);
+        fillToolsDistances(machineIndex, jobsAssignedCount); /* O(tj) -> Preencher a matriz de distâncias */
+        int startSwitch = fillStartMagazine(machineIndex, jobsAssignedCount); /* O(j) -> Preencher magazine inicial */
 
         for(int i = startSwitch ; i < jobsAssignedCount ; i++) {
-            magazines[1].insert(jobSets[npmJobAssignement[machineIndex][i]].begin(), jobSets[npmJobAssignement[machineIndex][i]].end());
+            magazines[1].insert(jobSets[npmJobAssignement[machineIndex][i]].begin(), jobSets[npmJobAssignement[machineIndex][i]].end()); /* O(t) */
             empty = npmMagazineCapacity[machineIndex] - magazines[1].size();
-            for(auto t : magazines[0]) {
+            for(auto t : magazines[0]) { /* O(t) */
                 if(!toolsRequirements[t][npmJobAssignement[machineIndex][i]])
-                    dist.insert(make_tuple(toolsDistancesGPCA[t][i], t));
+                    dist.insert(make_tuple(toolsDistancesGPCA[t][i], t)); /* O(logt) -> Ordena as ferramentas que estão no magazine, mas não são utilizadas no job atual */
             }
             npmCurrentToolSwitches[machineIndex] += dist.size() - empty;
 
             if(empty) {
                 for(auto t : dist) {
-                    magazines[1].insert(get<1>(t));
+                    magazines[1].insert(get<1>(t)); /* O(logt) -> Insere no magazine as ferramentas com menor distância */
                     if(!--empty)
                         break;
                 }
             }
-            magazines[0] = magazines[1];
-            magazines[1].clear();
-            dist.clear();
+            magazines[0] = magazines[1]; /* O(t) */
+            magazines[1].clear(); /* O(t) */
+            dist.clear(); /* O(t) */
         }
-        magazines[0].clear();
+        magazines[0].clear(); /* O(t) */
     }
-
-    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
+    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(), 0);
 }
 
-int fillStartMagazineGPCA(int machineIndex, int jobsAssignedCount) {
+int fillStartMagazine(int machineIndex, int jobsAssignedCount) {
     for(int i = 0 ; i < jobsAssignedCount ; i++) {
         for(auto s : jobSets[npmJobAssignement[machineIndex][i]]) {
             if(npmMagazineCapacity[machineIndex] - magazines[0].size())
@@ -125,7 +121,7 @@ int fillStartMagazineGPCA(int machineIndex, int jobsAssignedCount) {
     return INT_MAX;
 }
 
-void fillToolsDistancesGPCA(int machineIndex, int jobsAssignedCount) {
+void fillToolsDistances(int machineIndex, int jobsAssignedCount) {
     for(int i = 0 ; i < toolCount ; i++) {
         if(toolsRequirements[i][npmJobAssignement[machineIndex][jobsAssignedCount - 1]])
             toolsDistancesGPCA[i][jobsAssignedCount - 1] = jobsAssignedCount - 1;
@@ -143,109 +139,34 @@ void fillToolsDistancesGPCA(int machineIndex, int jobsAssignedCount) {
     }
 }
 
-int fillStartMagazine(int machineIndex, int jobsAssignedCount) {
-    int i, j, aux = 0;
-    
-    fill(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), -1);
+int replacedTool (int i) {
+    for(auto t : magazines[0])
+        dist.insert(make_tuple(toolsDistancesGPCA[t][i], t));
 
-    for(i = 0 ; i < jobsAssignedCount; i++) {
-        for(j = 0 ; j < toolCount ; j++) {
-            if(toolsRequirements[j][npmJobAssignement[machineIndex][i]]) {
-                if(aux < npmMagazineCapacity[machineIndex]) {
-                    if(find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
-                        npmCurrentMagazines[machineIndex][aux++] = j;
-                    }
-                }
-                else {
-                    return i;
-                }
-            }
-        }
-    } 
-    return i;
+    return get<1>(*dist.rbegin());
 }
 
-void fillToolsDistances(int machineIndex, int currentJob, int jobAssignedCount) {
-    for(int i = 0 ; i < npmMagazineCapacity[machineIndex] ; i++) {
-        npmToolsNeedDistance[machineIndex][i] = toolsDistances(machineIndex, currentJob, npmCurrentMagazines[machineIndex][i], jobAssignedCount);
-    }
-}
-
-int toolsDistances (int machineIndex, int currentJob, int currentTool, int jobAssignedCount) {
-    int aux = 0;
-
-    for(int i = currentJob ; i < jobAssignedCount ; i++) {
-        if(toolsRequirements[currentTool][npmJobAssignement[machineIndex][i]])
-            return aux;
-        else
-            aux++;
-    } 
-
-    return INT_MAX;
-}
-
-int toolSwitchesEvaluation() { 
-    for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
-        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
+int KTNS() {
+    for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
         npmCurrentToolSwitches[machineIndex] = 0;
-
-        int currentJob = fillStartMagazine(machineIndex, jobsAssignedCount);
-
-        for(int i = currentJob ; i < jobsAssignedCount ; i++) {
-            fillToolsDistances(machineIndex, i, jobsAssignedCount);
-            for(int j = 0 ; j < toolCount ; j++) {
-                if(toolsRequirements[j][npmJobAssignement[machineIndex][i]] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
-                    int indexToolChange = distance(npmToolsNeedDistance[machineIndex].begin(),max_element(npmToolsNeedDistance[machineIndex].begin(), npmToolsNeedDistance[machineIndex].end()));
-                    npmCurrentMagazines[machineIndex][indexToolChange] = j;
-                    npmToolsNeedDistance[machineIndex][indexToolChange] = 0;
-                    npmCurrentToolSwitches[machineIndex]++;
-                } 
-            }
-        }
-    }
-
-    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(), 0);
-}
-
-int flowtimeEvaluation() {
-    for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
-        npmCurrentFlowTime[machineIndex] = 0;
         int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size();
 
-        int currentJob = fillStartMagazine(machineIndex, jobsAssignedCount);
-        for(int i = 0 ; i < currentJob ; i++)
-            npmCurrentFlowTime[machineIndex] += npmJobTime[machineIndex][npmJobAssignement[machineIndex][i]];
+        fillToolsDistances(machineIndex, jobsAssignedCount);
+        int startSwitch = fillStartMagazine(machineIndex, jobsAssignedCount);
 
-        for(int i = currentJob ; i < jobsAssignedCount ; i++) {
-            fillToolsDistances(machineIndex, i, jobsAssignedCount);
-            int toolSwitches = 0;
+        for(int i = startSwitch ; i < jobsAssignedCount ; i++) {
             for(int j = 0 ; j < toolCount ; j++) {
-                if(toolsRequirements[j][npmJobAssignement[machineIndex][i]] && find(npmCurrentMagazines[machineIndex].begin(), npmCurrentMagazines[machineIndex].end(), j) == npmCurrentMagazines[machineIndex].end()) {
-                    int indexToolChange = distance(npmToolsNeedDistance[machineIndex].begin(),max_element(npmToolsNeedDistance[machineIndex].begin(), npmToolsNeedDistance[machineIndex].end()));
-                    npmCurrentMagazines[machineIndex][indexToolChange] = j;
-                    npmToolsNeedDistance[machineIndex][indexToolChange] = 0;
-                    toolSwitches++;
-                } 
+                if(toolsRequirements[j][npmJobAssignement[machineIndex][i]] && find(magazines[0].begin(), magazines[0].end(), j) == magazines[0].end()) {
+                    magazines[0].insert(j);
+                    magazines[0].erase(replacedTool(i));
+                    npmCurrentToolSwitches[machineIndex]++;
+                    dist.clear();
+                }
             }
-            npmCurrentFlowTime[machineIndex] += (npmSwitchCost[machineIndex] * toolSwitches) + npmJobTime[machineIndex][npmJobAssignement[machineIndex][i]];
         }
+        magazines[0].clear();
     }
-
-    return accumulate(npmCurrentFlowTime.begin(),npmCurrentFlowTime.end(),0);
-}
-
-int makespanEvaluation() {
-    int highestMakespan = 0;
-
-    toolSwitchesEvaluation();
-    flowtimeEvaluation();
-    for (int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
-        npmCurrentMakespan[machineIndex] = npmCurrentFlowTime[machineIndex] + npmCurrentToolSwitches[machineIndex] * npmSwitchCost[machineIndex];
-        if (npmCurrentMakespan[machineIndex] > highestMakespan)
-            highestMakespan = npmCurrentMakespan[machineIndex];
-    }
-
-    return highestMakespan;
+    return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
 }
 
 void makeInitialRandomSolution() {
@@ -415,13 +336,7 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
 
     switch(objective) {
         case 1:
-            VND(GPCA, npmCurrentToolSwitches);
-            break;
-        case 2:
-            VND(makespanEvaluation, npmCurrentMakespan);
-            break;
-        case 3:
-            VND(flowtimeEvaluation, npmCurrentFlowTime);
+            VND(KTNS, npmCurrentToolSwitches);
             break;
     }
 
@@ -562,7 +477,7 @@ void termination() {
 
 template <typename S>
 int printSolution(string inputFileName, double runningTime, int objective, int run, S &s) {
-    int totalToolSwitches = toolSwitchesEvaluation(), totalFlowtime = flowtimeEvaluation(), totalMakespan = makespanEvaluation();
+    int totalToolSwitches = GPCA();
 
     s << "RUN : " << run << " - " << inputFileName << "\n\n";
     for(int i = 0 ; i < machineCount ; i++) {
@@ -586,15 +501,11 @@ int printSolution(string inputFileName, double runningTime, int objective, int r
 
     s << "# -------------------------- #" << "\n\n";
     s << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
-    s << "--- TOTAL FLOWTIME : " << totalFlowtime << endl;
-    s << "--- TOTAL MAKESPAN : " << totalMakespan << endl;
     s << "--- RUNNING TIME : " << runningTime << "\n\n";
     s << "# -------------------------- #\n";
 
     switch(objective) {
         case 1: return totalToolSwitches;
-        case 2: return totalMakespan;
-        case 3: return totalFlowtime;
         default: return INT_MAX;
     }
 }
