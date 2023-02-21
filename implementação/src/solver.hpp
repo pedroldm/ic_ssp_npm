@@ -1,7 +1,7 @@
 #ifndef SOLVER_HPP
 #define SOLVER_HPP
 
-/* instancias_txt/SSP-NPM-I/ins7_m=2_j=10_t=10_var=7.txt */
+/* Eligibilidade - instancias_txt/SSP-NPM-I/ins7_m=2_j=10_t=10_var=7.txt */
 
 #include <sys/stat.h>
 #include <random>
@@ -27,6 +27,7 @@ using namespace std::chrono;
 int toolsDistances(int machineIndex, int currentJob, int currentTool, int jobAssignedCount);
 int GPCA();
 int KTNS();
+int makespanEvaluation();
 int replacedTool(int i);
 void fillToolsDistances(int machineIndex, int jobCount);
 int fillStartMagazine(int machineIndex, int jobsAssignedCount);
@@ -39,6 +40,7 @@ bool twoOptLocalSearch(function<int(void)> evaluationFunction);
 bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
 bool swapLocalSearch(function<int(void)> evaluationFunction);
 
+/* Metaheuristics */
 void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 
@@ -54,6 +56,8 @@ template<typename T>
 ostream& operator<< (ostream& out, const vector<vector<T>>& matrix);
 template<typename T>
 ostream& operator<<(ostream& out, const set<T>& m);
+template <typename T>
+ostream& operator<<(ostream& os, const vector<tuple<T, T>>& vector);
 
 /* Initializes and terminates all data structures */
 void initialization();
@@ -70,32 +74,32 @@ vector<int> npmSwitchCost; /* switch cost of each machine */
 vector<int> npmCurrentToolSwitches; /* current switches count of each machine */
 vector<int> npmCurrentMakespan; /* current makespan of each machine */
 vector<int> npmCurrentFlowTime; /* current flowtime of each machine */
-vector<set<int>> jobSets;
-vector<set<int>> magazines;
-set<tuple<int, int>> dist;
-vector<vector<int>> toolsDistancesGPCA;
-vector<vector<int>> jobEligibility;
+vector<set<int>> jobSets; /* tool occurrence for each job */
+vector<set<int>> magazines; /* magazines */
+set<tuple<int, int>> dist; /* tools distances for replacement on KTNS */
+vector<vector<int>> toolsDistancesGPCA; /* tools distances for replacement on GPCA */
+vector<vector<int>> jobEligibility; /* eligibility matrix */
 
 int GPCA() {
     for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
         int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size(), empty; /* .size() -> O(1)*/
         npmCurrentToolSwitches[machineIndex] = 0;
 
-        fillToolsDistances(machineIndex, jobsAssignedCount); /* O(tj) -> Preencher a matriz de distâncias */
-        int startSwitch = fillStartMagazine(machineIndex, jobsAssignedCount); /* O(j) -> Preencher magazine inicial */
+        fillToolsDistances(machineIndex, jobsAssignedCount); /* O(tj) */
+        int startSwitch = fillStartMagazine(machineIndex, jobsAssignedCount); /* O(j) */
 
         for(int i = startSwitch ; i < jobsAssignedCount ; i++) {
             magazines[1].insert(jobSets[npmJobAssignement[machineIndex][i]].begin(), jobSets[npmJobAssignement[machineIndex][i]].end()); /* O(t) */
             empty = npmMagazineCapacity[machineIndex] - magazines[1].size();
             for(auto t : magazines[0]) { /* O(t) */
                 if(!toolsRequirements[t][npmJobAssignement[machineIndex][i]])
-                    dist.insert(make_tuple(toolsDistancesGPCA[t][i], t)); /* O(logt) -> Ordena as ferramentas que estão no magazine, mas não são utilizadas no job atual */
+                    dist.insert(make_tuple(toolsDistancesGPCA[t][i], t)); /* O(logt) */
             }
             npmCurrentToolSwitches[machineIndex] += dist.size() - empty;
 
             if(empty) {
                 for(auto t : dist) {
-                    magazines[1].insert(get<1>(t)); /* O(logt) -> Insere no magazine as ferramentas com menor distância */
+                    magazines[1].insert(get<1>(t)); /* O(logt) */
                     if(!--empty)
                         break;
                 }
@@ -175,6 +179,10 @@ void makeInitialRandomSolution() {
 
     mt19937 rng(random_device{}());
     shuffle(r.begin(), r.end(), rng);
+
+    for(auto& v : npmJobAssignement) {
+        v.clear();
+    }
 
     int i = 0;
     while (!r.empty()) {
@@ -273,47 +281,63 @@ bool swapLocalSearch(function<int(void)> evaluationFunction) {
 }
 
 vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool) {
-    int j;
     vector<tuple<int,int>> oneBlocks;
+    int blockStart;
 
     for(int i = 0 ; i < (int)npmJobAssignement[machineIndex].size() ; i++) {
-        if(toolsRequirements[tool][i]) {
-            j = i;
-            while(toolsRequirements[tool][i]) { i++; }
-            oneBlocks.push_back(tuple<int, int>(j, i - 1));
+        if(toolsRequirements[tool][npmJobAssignement[machineIndex][i]]) {
+            blockStart = i;
+            while(i < (int)npmJobAssignement[machineIndex].size() && toolsRequirements[tool][npmJobAssignement[machineIndex][i]]) { i++; }
+            oneBlocks.push_back(make_tuple(blockStart, i - 1));
         }
     }
-    
+
     return oneBlocks;
 }
 
 bool oneBlockLocalSearch(function<int(void)> evaluationFunction) {
-    int currentBest = evaluationFunction(), itAux, job;
+    int currentBest = evaluationFunction(), job;
     vector<tuple<int,int>> oneBlocks;
 
     for(int i = 0 ; i < machineCount ; i++) {
         for(int j = 0 ; j < toolCount ; j++) {
             oneBlocks = findOneBlocks(i, j);
-            for(int k = 0 ; k < (int)oneBlocks.size() ; k++) {
-                for(int l = 0 ; l < (int)oneBlocks.size() ; l++) {
-                    if (k == l)
+            for(int remove = 0 ; remove < (int)oneBlocks.size() ; remove++) {
+                for(int insert = 0 ; insert < (int)oneBlocks.size() ; insert++) {
+                    if (remove == insert)
                         continue;
-                    for(int m = get<0>(oneBlocks[k]) ; m <= get<1>(oneBlocks[k]) ; m++) {
+                    for(int m = get<0>(oneBlocks[remove]) ; m <= get<1>(oneBlocks[remove]) ; m++) {
                         job = npmJobAssignement[i][m];
-                        itAux = (k > l) ? -1 : 0;
-                        npmJobAssignement[i].erase(npmJobAssignement[i].begin() + m);
-                        npmJobAssignement[i].insert(npmJobAssignement[i].begin() + get<0>(oneBlocks[l]) + itAux, job);
-                        if(evaluationFunction() < currentBest)
-                            return true;
-                        else {
-                            for(int n = get<0>(oneBlocks[l]) ; n < get<1>(oneBlocks[l]) ; n++) {
+                        if(insert > remove) {
+                            npmJobAssignement[i].insert(npmJobAssignement[i].begin() + get<0>(oneBlocks[insert]), job);
+                            npmJobAssignement[i].erase(npmJobAssignement[i].begin() + m);
+                            if(evaluationFunction() < currentBest)
+                                return true;
+                                
+                            for(int n = get<0>(oneBlocks[insert]) - 1; n < get<1>(oneBlocks[insert]); n++) {
                                 swap(npmJobAssignement[i][n], npmJobAssignement[i][n + 1]);
                                 if(evaluationFunction() < currentBest)
                                     return true;
                             }
+
+                            npmJobAssignement[i].erase(npmJobAssignement[i].begin() + get<1>(oneBlocks[insert]));
+                            npmJobAssignement[i].insert(npmJobAssignement[i].begin() + m, job);
                         }
-                        npmJobAssignement[i].erase(npmJobAssignement[i].begin() + get<1>(oneBlocks[l]));
-                        npmJobAssignement[i].insert(npmJobAssignement[i].begin() + m, job);
+                        else {
+                            npmJobAssignement[i].erase(npmJobAssignement[i].begin() + m);
+                            npmJobAssignement[i].insert(npmJobAssignement[i].begin() + get<0>(oneBlocks[insert]), job);
+                            if(evaluationFunction() < currentBest)
+                                return true;
+
+                            for(int n = get<0>(oneBlocks[insert]); n <= get<1>(oneBlocks[insert]); n++) {
+                                swap(npmJobAssignement[i][n], npmJobAssignement[i][n + 1]);
+                                if(evaluationFunction() < currentBest)
+                                    return true;
+                            }
+
+                            npmJobAssignement[i].erase(npmJobAssignement[i].begin() + get<1>(oneBlocks[insert]) + 1);
+                            npmJobAssignement[i].insert(npmJobAssignement[i].begin() + m, job);
+                        }
                     }
                 }
             }
@@ -322,19 +346,30 @@ bool oneBlockLocalSearch(function<int(void)> evaluationFunction) {
     return false;
 }
 
+int makespanEvaluation() {
+    GPCA();
+
+    for(int i = 0 ; i < machineCount ; i++) {
+        npmCurrentMakespan[i] = npmCurrentToolSwitches[i] * npmSwitchCost[i];
+        for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
+            npmCurrentMakespan[i] += npmJobTime[i][npmJobAssignement[i][j]];
+        }
+    }
+
+    return *max_element(npmCurrentMakespan.begin(), npmCurrentMakespan.end());
+}
+
 void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     for (int i = 0 ; i < 100 ; i++) {
         makeInitialRandomSolution();
         while(jobInsertionLocalSearch(evaluationFunction, evaluationVector)  || 
                 jobExchangeLocalSearch(evaluationFunction, evaluationVector) || 
                 twoOptLocalSearch(evaluationFunction) ||
-                swapLocalSearch(evaluationFunction)) {}
+                swapLocalSearch(evaluationFunction) ||
+                oneBlockLocalSearch(evaluationFunction)) {}
         if (evaluationFunction() < best) {
             best = evaluationFunction();
             bestSolution = npmJobAssignement;
-        }
-        for(auto& v : npmJobAssignement) {
-            v.clear();
         }
     }
 }
@@ -355,7 +390,14 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
             case 4 :
                 k = swapLocalSearch(evaluationFunction) ? 1 : k + 1;
                 break;
+            case 5 :
+                k = oneBlockLocalSearch(evaluationFunction) ? 1 : k + 1;
+                break;
         }
+    }
+    if (evaluationFunction() < best) {
+        best = evaluationFunction();
+        bestSolution = npmJobAssignement;
     }
 }
 
@@ -365,15 +407,10 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
     readProblem(inputFileName);
     checkMachinesEligibility();
 
-    makeInitialRandomSolution();
-
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    switch(objective) {
-        case 1:
-            VND(GPCA, npmCurrentToolSwitches);
-            break;
-    }
+    makeInitialRandomSolution();
+    VND(GPCA, npmCurrentToolSwitches);
 
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 
@@ -388,7 +425,6 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
     return result;												
 }
 
-/* Reads the problem from a file specified by fileName */
 void readProblem(string fileName) {
     int aux;
 	ifstream fpIn(fileName);
@@ -512,7 +548,7 @@ void termination() {
 
 template <typename S>
 int printSolution(string inputFileName, double runningTime, int objective, int run, S &s) {
-    int totalToolSwitches = GPCA();
+    int totalToolSwitches = GPCA(), makespan = makespanEvaluation()/* , flowTime = flowtimeEvaluation() */;
 
     s << "RUN : " << run << " - " << inputFileName << "\n\n";
     for(int i = 0 ; i < machineCount ; i++) {
@@ -520,14 +556,14 @@ int printSolution(string inputFileName, double runningTime, int objective, int r
 
         if(PRINT_MATRIX) {
             for(int j = 0 ; j < toolCount ; j++) {
-                for(int k : npmJobAssignement[i]) {
+                for(int k : bestSolution[i]) {
                     s << toolsRequirements[j][k] << " ";
                 }
                 s << endl;
             }
         }
 
-        s << "\nJOBS " << npmJobAssignement[i];
+        s << "\nJOBS " << bestSolution[i];
 
         s << "TOOL SWITCHES : " << npmCurrentToolSwitches[i] << endl;
         s << "FLOWTIME : " << npmCurrentFlowTime[i] << endl;
@@ -536,6 +572,8 @@ int printSolution(string inputFileName, double runningTime, int objective, int r
 
     s << "# -------------------------- #" << "\n\n";
     s << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
+    s << "--- FINAL MAKESPAN : " << makespan << endl;
+    /* s << "--- TOTAL FLOW TIME : " << flowTime << endl; */
     s << "--- RUNNING TIME : " << runningTime << "\n\n";
     s << "# -------------------------- #\n";
 
@@ -552,6 +590,18 @@ ostream& operator<<(ostream& os, const vector<T>& vector) {
         os << vector[i];
         if(i != (int)vector.size() - 1)
             os << ", ";
+    }
+    os << "]\n";
+    return os;
+}
+
+template <typename T>
+ostream& operator<<(ostream& os, const vector<tuple<T, T>>& vector) {
+    os << "[" << vector.size() << "] - [";
+    for(int i = 0; i < (int)vector.size(); ++i) {
+        os << "(" << get<0>(vector[i]) << ", " << get<1>(vector[i]) << ")";
+        if(i != (int)vector.size() - 1)
+            os << " ; ";
     }
     os << "]\n";
     return os;
