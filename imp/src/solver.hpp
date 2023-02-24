@@ -35,10 +35,12 @@ int checkJobEligibility(int machineIndex, int job);
 void checkMachinesEligibility();
 
 /* Local search methods */
-bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
-bool twoOptLocalSearch(function<int(void)> evaluationFunction);
-bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
-bool swapLocalSearch(function<int(void)> evaluationFunction);
+/* 0 */ bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
+/* 1 */ bool twoOptLocalSearch(function<int(void)> evaluationFunction);
+/* 2 */ bool jobExchangeLocalSearch(function<int(void)> evaluationFunction, vector<int> evaluationVector);
+/* 3 */ bool swapLocalSearch(function<int(void)> evaluationFunction);
+/* 4 */ bool oneBlockLocalSearch(function<int(void)> evaluationFunction);
+vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool);
 
 /* Metaheuristics */
 void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
@@ -46,8 +48,8 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 
 /* I/O */
 int singleRun(string inputFileName, ofstream& outputFile, int run);
-void validateArguments (int argc, char* argv[]);
 void readProblem(string fileName);
+void parseArguments(vector<string> arguments);
 template <typename S>
 int printSolution(string inputFileName, double runningTime, int objective, int run, S &s);
 template <typename T>
@@ -63,6 +65,7 @@ ostream& operator<<(ostream& os, const vector<tuple<T, T>>& vector);
 void initialization();
 void termination();
 
+int runs, objective, localSearch1, localSearch2, localSearch3, localSearch4, vnsDisturb, maxIterations;
 int machineCount, toolCount, jobCount, best; /* quantity of machines, tools, jobs and current best solution value */
 vector<vector<int>> npmJobAssignement, bestSolution; /* current jobs and tools assigned to each machine and best solution assignements */
 vector<vector<int>> toolsRequirements; /* jobs and tools requirements */
@@ -378,26 +381,83 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
     int k = 1;
     while (k != 5) {
         switch(k) {
-            case 1 : 
-                k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+            case 1 :
+                switch(localSearch1) {
+                    case 0 :
+                        k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                        break;
+                    case 1 :
+                        k = jobExchangeLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                        break;
+                    case 2 :
+                        k = twoOptLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                    case 3 :
+                        k = swapLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                    case 4 :
+                        k = oneBlockLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                }
                 break;
             case 2 : 
-                k = jobExchangeLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                switch(localSearch2) {
+                    case 0 :
+                        k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                        break;
+                    case 1 :
+                        k = jobExchangeLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                        break;
+                    case 2 :
+                        k = twoOptLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                    case 3 :
+                        k = swapLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                    case 4 :
+                        k = oneBlockLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                }
                 break;
             case 3 :
-                k = twoOptLocalSearch(evaluationFunction) ? 1 : k + 1;
+                switch(localSearch3) {
+                    case 0 :
+                        k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                        break;
+                    case 1 :
+                        k = jobExchangeLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                        break;
+                    case 2 :
+                        k = twoOptLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                    case 3 :
+                        k = swapLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                    case 4 :
+                        k = oneBlockLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                }
                 break;
             case 4 :
-                k = swapLocalSearch(evaluationFunction) ? 1 : k + 1;
-                break;
-            case 5 :
-                k = oneBlockLocalSearch(evaluationFunction) ? 1 : k + 1;
+                switch(localSearch4) {
+                    case 0 :
+                        k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                        break;
+                    case 1 :
+                        k = jobExchangeLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
+                        break;
+                    case 2 :
+                        k = twoOptLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                    case 3 :
+                        k = swapLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                    case 4 :
+                        k = oneBlockLocalSearch(evaluationFunction) ? 1 : k + 1;
+                        break;
+                }
                 break;
         }
-    }
-    if (evaluationFunction() < best) {
-        best = evaluationFunction();
-        bestSolution = npmJobAssignement;
     }
 }
 
