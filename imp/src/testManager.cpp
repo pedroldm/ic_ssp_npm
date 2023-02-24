@@ -1,21 +1,22 @@
 #include "solver.hpp"
 
-string inputFileName, ans;
-ifstream fpIndex;
-ofstream outputFile;
-int objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
-
 int main(int argc, char* argv[])
 {
     vector<string> arguments(argv + 1, argv + argc);
 
     parseArguments(arguments);
 
-	while(fpIndex>>inputFileName) {
-		for(int i = 1 ; i <= runs ; i++) {
-			singleRun(inputFileName, outputFile, i, objective);
+    if(fpIndex.is_open()) {
+        while(fpIndex>>inputFileName) {
+            for(int i = 1 ; i <= runs ; i++) {
+                singleRun(inputFileName, outputFile, i, objective);
+            }
         }
-	}
+    }
+    else if(fileExists(instance))
+        cout << singleRun(instance, outputFile, 0, objective);
+    else
+        throw invalid_argument("ERROR : Input file not well informed");
 }
 
 void parseArguments(vector<string> arguments) {
@@ -26,6 +27,8 @@ void parseArguments(vector<string> arguments) {
             runs = stoi(arguments[i + 1]);
         else if (arguments[i]=="--iterations")
             maxIterations = stoi(arguments[i + 1]);
+        else if (arguments[i]=="--instance")
+            instance = (arguments[i + 1]);
         else if (arguments[i]=="--localSearch1")
             localSearch1 = stoi(arguments[i + 1]);
         else if (arguments[i]=="--localSearch2")

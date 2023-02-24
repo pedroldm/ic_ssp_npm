@@ -65,8 +65,11 @@ ostream& operator<<(ostream& os, const vector<tuple<T, T>>& vector);
 void initialization();
 void termination();
 
-int runs, objective, localSearch1, localSearch2, localSearch3, localSearch4, vnsDisturb, maxIterations;
+int runs, objective, localSearch1, localSearch2, localSearch3, localSearch4, vnsDisturb, maxIterations, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
 int machineCount, toolCount, jobCount, best; /* quantity of machines, tools, jobs and current best solution value */
+string instance, inputFileName, ans;
+ifstream fpIndex;
+ofstream outputFile;
 vector<vector<int>> npmJobAssignement, bestSolution; /* current jobs and tools assigned to each machine and best solution assignements */
 vector<vector<int>> toolsRequirements; /* jobs and tools requirements */
 vector<vector<int>> npmJobTime; /* time cost of each job on each machine */
@@ -459,6 +462,10 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
                 break;
         }
     }
+    if (evaluationFunction() < best) {
+        best = evaluationFunction();
+        bestSolution = npmJobAssignement;
+    }
 }
 
 int singleRun(string inputFileName, ofstream& outputFile, int run, int objective) {
@@ -478,7 +485,7 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
 	runningTime =  time_span.count();											
 
 	result = printSolution(inputFileName, runningTime, objective, run, cout);		
-	result = printSolution(inputFileName, runningTime, objective, run, outputFile);		
+	//result = printSolution(inputFileName, runningTime, objective, run, outputFile);		
 
 	termination();
 
@@ -610,7 +617,7 @@ template <typename S>
 int printSolution(string inputFileName, double runningTime, int objective, int run, S &s) {
     int totalToolSwitches = GPCA(), makespan = makespanEvaluation()/* , flowTime = flowtimeEvaluation() */;
 
-    s << "RUN : " << run << " - " << inputFileName << "\n\n";
+/*     s << "RUN : " << run << " - " << inputFileName << "\n\n";
     for(int i = 0 ; i < machineCount ; i++) {
         s << "- MACHINE [" << i << "]" << "\n\n";
 
@@ -633,13 +640,19 @@ int printSolution(string inputFileName, double runningTime, int objective, int r
     s << "# -------------------------- #" << "\n\n";
     s << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
     s << "--- FINAL MAKESPAN : " << makespan << endl;
-    /* s << "--- TOTAL FLOW TIME : " << flowTime << endl; */
+    s << "--- TOTAL FLOW TIME : " << flowTime << endl;
     s << "--- RUNNING TIME : " << runningTime << "\n\n";
-    s << "# -------------------------- #\n";
+    s << "# -------------------------- #\n"; */
 
     switch(objective) {
-        case 1: return totalToolSwitches;
-        default: return INT_MAX;
+        case 1: 
+            return totalToolSwitches;
+        case 2:
+            return makespan;
+        case 3:
+            return 0; /* flowTime; */
+        default: 
+            return INT_MAX;
     }
 }
 
