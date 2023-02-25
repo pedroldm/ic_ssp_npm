@@ -17,6 +17,7 @@
 #include <tuple>
 #include <functional>
 #include <set>
+#include <cstdlib>
 
 using namespace std;
 using namespace std::chrono;
@@ -45,6 +46,9 @@ vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool);
 /* Metaheuristics */
 void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+void jobInsertionDisturb();
+void jobExchangeDisturb();
+void VNS(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 
 /* I/O */
 int singleRun(string inputFileName, ofstream& outputFile, int run);
@@ -90,6 +94,8 @@ int GPCA() {
     for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
         int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size(), empty; /* .size() -> O(1)*/
         npmCurrentToolSwitches[machineIndex] = 0;
+        if(!npmJobAssignement[machineIndex].size())
+            continue;
 
         fillToolsDistances(machineIndex, jobsAssignedCount); /* O(tj) */
         int startSwitch = fillStartMagazine(machineIndex, jobsAssignedCount); /* O(j) */
@@ -185,10 +191,6 @@ void makeInitialRandomSolution() {
 
     mt19937 rng(random_device{}());
     shuffle(r.begin(), r.end(), rng);
-
-    for(auto& v : npmJobAssignement) {
-        v.clear();
-    }
 
     int i = 0;
     while (!r.empty()) {
@@ -380,6 +382,109 @@ void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evalu
     }
 }
 
+void jobInsertionDisturb() {
+    vector<int> r(machineCount);
+    iota(r.begin(), r.end(), 0);
+
+    mt19937 rng(random_device{}());
+    shuffle(r.begin(), r.end(), rng);
+
+    vector<int> jR(npmJobAssignement[r[0]].size());
+    iota(jR.begin(), jR.end(), 0);
+    shuffle(jR.begin(), jR.end(), rng);
+
+    for(int i = 0 ; i < (int) jR.size() ; i++) {
+        if(jobEligibility[r[1]][npmJobAssignement[r[0]][jR[i]]]) {
+            npmJobAssignement[r[1]].insert(npmJobAssignement[r[1]].begin() + rand () % (npmJobAssignement[r[1]].size() + 1), npmJobAssignement[r[0]][jR[i]]);
+            npmJobAssignement[r[0]].erase(npmJobAssignement[r[0]].begin() + jR[i]);
+            return;
+        }
+    } 
+}
+
+void jobExchangeDisturb() {
+    vector<int> r(machineCount);
+    iota(r.begin(), r.end(), 0);
+
+    mt19937 rng(random_device{}());
+    shuffle(r.begin(), r.end(), rng);
+
+    vector<int> jR(npmJobAssignement[r[0]].size()), jI(npmJobAssignement[r[1]].size());
+    iota(jR.begin(), jR.end(), 0);
+    iota(jI.begin(), jI.end(), 0);
+    shuffle(jR.begin(), jR.end(), rng);
+    shuffle(jI.begin(), jI.end(), rng);
+
+    for(int i = 0 ; i < (int) jR.size() ; i++) {
+        for(int j = 0 ; j < (int) jI.size() ; j++) {
+            if(jobEligibility[r[0]][npmJobAssignement[r[1]][jI[j]]] && jobEligibility[r[1]][npmJobAssignement[r[0]][jR[i]]]) {
+                swap(npmJobAssignement[r[1]][jI[j]], npmJobAssignement[r[0]][jR[i]]);
+                return;
+            }
+        }
+    }
+}
+
+void twoOptDisturb() {
+    int m = 0;
+    mt19937 rng(random_device{}());
+    vector<int> mv(machineCount);
+    iota(mv.begin(), mv.end(), 0);
+    shuffle(mv.begin(), mv.end(), rng);
+    for(int i = 0 ; i < (int)mv.size() ; i++) {
+        if(npmJobAssignement[i].size() >= 2) {
+            m = i;
+            break;
+        }
+    }
+
+    vector<int> r ((int)npmJobAssignement[m].size());
+    iota(r.begin(), r.end(), 0);
+    shuffle(r.begin(), r.end(), rng);
+    
+    if (r[1] > r[0])
+        reverse(npmJobAssignement[m].begin() + r[0], npmJobAssignement[m].begin() + r[1] + 1);
+    else
+        reverse(npmJobAssignement[m].begin() + r[1], npmJobAssignement[m].begin() + r[0] + 1);
+}
+
+void swapDisturb() {
+    int m = rand () % machineCount;
+    vector<int> r ((int)npmJobAssignement[m].size());
+    iota(r.begin(), r.end(), 0);
+
+    mt19937 rng(random_device{}());
+    shuffle(r.begin(), r.end(), rng);
+    
+    swap(npmJobAssignement[m][r[0]], npmJobAssignement[m][r[1]]);
+}
+
+void VNS(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+    makeInitialRandomSolution();
+
+    while(maxIterations--) {
+        VND(evaluationFunction, evaluationVector);
+        if (evaluationFunction() < best) {
+            best = evaluationFunction();
+            bestSolution = npmJobAssignement;
+        }
+        switch(vnsDisturb) {
+            case 0 :
+                jobInsertionDisturb();
+                break;
+            case 1 :
+                jobExchangeDisturb();
+                break;
+            case 2 :
+                twoOptDisturb();
+                break;
+            case 3 :
+                swapDisturb();
+                break;
+        }
+    }
+}
+
 void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
     while (k != 5) {
@@ -462,10 +567,6 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
                 break;
         }
     }
-    if (evaluationFunction() < best) {
-        best = evaluationFunction();
-        bestSolution = npmJobAssignement;
-    }
 }
 
 int singleRun(string inputFileName, ofstream& outputFile, int run, int objective) {
@@ -476,8 +577,7 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    makeInitialRandomSolution();
-    VND(GPCA, npmCurrentToolSwitches);
+    VNS(GPCA, npmCurrentToolSwitches);
 
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 

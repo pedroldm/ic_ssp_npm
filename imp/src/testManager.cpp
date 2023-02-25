@@ -4,6 +4,7 @@ int main(int argc, char* argv[])
 {
     vector<string> arguments(argv + 1, argv + argc);
 
+    srand(time(NULL));
     parseArguments(arguments);
 
     if(fpIndex.is_open()) {
