@@ -29,16 +29,13 @@ void parseArguments(vector<string> arguments) {
             maxIterations = stoi(arguments[i + 1]);
         else if (arguments[i]=="--instance")
             instance = (arguments[i + 1]);
-        else if (arguments[i]=="--localSearch1")
-            localSearch1 = stoi(arguments[i + 1]);
-        else if (arguments[i]=="--localSearch2")
-            localSearch2 = stoi(arguments[i + 1]);
-        else if (arguments[i]=="--localSearch3")
-            localSearch3 = stoi(arguments[i + 1]);
-        else if (arguments[i]=="--localSearch4")
-            localSearch4 = stoi(arguments[i + 1]);
-        else if (arguments[i]=="vnsDisturb")
-            vnsDisturb = stoi(arguments[i + 1]);
+        else if (arguments[i]=="--lsOrder") {
+            localSearch1 = (int)arguments[i + 1].at(0) - 48;
+            localSearch2 = (int)arguments[i + 1].at(1) - 48;
+            localSearch3 = (int)arguments[i + 1].at(2) - 48;
+            localSearch4 = (int)arguments[i + 1].at(3) - 48;
+            vnsDisturb = (int)arguments[i + 1].at(4) - 48;
+        }
         else if (arguments[i]=="--input") {
             inputFileName = arguments[i + 1];
             fpIndex.open(arguments[i + 1]);
