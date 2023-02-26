@@ -36,7 +36,7 @@ CONFIG_PARAMS=$*
 # EDIT THIS: Path to your executable
 EXE="../testManager"
 # EDIT THIS: Specify how parameters are given to your executable
-EXE_PARAMS="--objective 1 --instance $INSTANCE ${CONFIG_PARAMS}"
+EXE_PARAMS="--instance $INSTANCE ${CONFIG_PARAMS}"
 
 if [ ! -x "$(command -v ${EXE})" ]; then
     error "${EXE}: not found or not executable (pwd: $(pwd))"

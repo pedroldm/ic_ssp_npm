@@ -46,9 +46,11 @@ vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool);
 /* Metaheuristics */
 void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+void VNS(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 void jobInsertionDisturb();
 void jobExchangeDisturb();
-void VNS(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+void twoOptDisturb();
+void swapDisturb();
 
 /* I/O */
 int singleRun(string inputFileName, ofstream& outputFile, int run);
@@ -211,9 +213,7 @@ bool jobInsertionLocalSearch(function<int(void)> evaluationFunction, vector<int>
         npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + i);
 
         for(int j = 0 ; j < machineCount ; j++) {
-            if (j == criticalMachine)
-                continue;
-            if (!jobEligibility[j][jobIndex])
+            if (j == criticalMachine || !jobEligibility[j][jobIndex])
                 continue;
             npmJobAssignement[j].insert(npmJobAssignement[j].begin(), jobIndex);
             if(evaluationFunction() < currentBest)
@@ -449,11 +449,19 @@ void twoOptDisturb() {
 }
 
 void swapDisturb() {
-    int m = rand () % machineCount;
+    int m = 0;
+    mt19937 rng(random_device{}());
+    vector<int> mv(machineCount);
+    iota(mv.begin(), mv.end(), 0);
+    shuffle(mv.begin(), mv.end(), rng);
+    for(int i = 0 ; i < (int)mv.size() ; i++) {
+        if(npmJobAssignement[i].size() >= 2) {
+            m = i;
+            break;
+        }
+    }
     vector<int> r ((int)npmJobAssignement[m].size());
     iota(r.begin(), r.end(), 0);
-
-    mt19937 rng(random_device{}());
     shuffle(r.begin(), r.end(), rng);
     
     swap(npmJobAssignement[m][r[0]], npmJobAssignement[m][r[1]]);
