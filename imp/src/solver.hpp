@@ -73,6 +73,7 @@ void termination();
 
 int runs, objective, localSearch1, localSearch2, localSearch3, localSearch4, vnsDisturb, maxIterations, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
 int machineCount, toolCount, jobCount, best; /* quantity of machines, tools, jobs and current best solution value */
+int enableLS1, enableLS2, enableLS3, enableLS4; /* quantity of machines, tools, jobs and current best solution value */
 string instance, inputFileName, ans;
 ifstream fpIndex;
 ofstream outputFile;
@@ -498,6 +499,7 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
     while (k != 5) {
         switch(k) {
             case 1 :
+                if(!enableLS1) break;
                 switch(localSearch1) {
                     case 0 :
                         k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
@@ -517,6 +519,7 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
                 }
                 break;
             case 2 : 
+                if(!enableLS2) break;
                 switch(localSearch2) {
                     case 0 :
                         k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
@@ -536,6 +539,7 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
                 }
                 break;
             case 3 :
+                if (!enableLS3) break;
                 switch(localSearch3) {
                     case 0 :
                         k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
@@ -555,6 +559,7 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
                 }
                 break;
             case 4 :
+                if(!enableLS4) break;
                 switch(localSearch4) {
                     case 0 :
                         k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;

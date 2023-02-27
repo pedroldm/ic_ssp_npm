@@ -30,6 +30,14 @@ void parseArguments(vector<string> arguments) {
             maxIterations = stoi(arguments[i + 1]);
         else if (arguments[i]=="--instance")
             instance = (arguments[i + 1]);
+        else if (arguments[i]=="--enableLS1")
+            enableLS1 = stoi(arguments[i + 1]);
+        else if (arguments[i]=="--enableLS2")
+            enableLS2 = stoi(arguments[i + 1]);
+        else if (arguments[i]=="--enableLS3")
+            enableLS3 = stoi(arguments[i + 1]);
+        else if (arguments[i]=="--enableLS4")
+            enableLS4 = stoi(arguments[i + 1]);
         else if (arguments[i]=="--lsOrder") {
             localSearch1 = (int)arguments[i + 1].at(0) - 48;
             localSearch2 = (int)arguments[i + 1].at(1) - 48;
