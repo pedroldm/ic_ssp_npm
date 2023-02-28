@@ -187,7 +187,7 @@ int KTNS() {
     return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
 }
 
-void makeInitialRandomSolution() {
+void createStartingSolution() {
     vector<int> r(jobCount);
     iota(r.begin(), r.end(), 0);
 
@@ -369,7 +369,7 @@ int makespanEvaluation() {
 
 void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     for (int i = 0 ; i < 100 ; i++) {
-        makeInitialRandomSolution();
+        createStartingSolution();
         while(jobInsertionLocalSearch(evaluationFunction, evaluationVector)  || 
                 jobExchangeLocalSearch(evaluationFunction, evaluationVector) || 
                 twoOptLocalSearch(evaluationFunction) ||
@@ -468,14 +468,9 @@ void swapDisturb() {
 }
 
 void VNS(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
-    makeInitialRandomSolution();
+    createStartingSolution();
 
     while(maxIterations--) {
-        VND(evaluationFunction, evaluationVector);
-        if (evaluationFunction() < best) {
-            best = evaluationFunction();
-            bestSolution = npmJobAssignement;
-        }
         switch(vnsDisturb) {
             case 0 :
                 jobInsertionDisturb();
@@ -489,6 +484,12 @@ void VNS(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
             case 3 :
                 swapDisturb();
                 break;
+        }
+        VND(evaluationFunction, evaluationVector);
+        if (evaluationFunction() < best) {
+            best = evaluationFunction();
+            cout << best << endl;
+            bestSolution = npmJobAssignement;
         }
     }
 }
@@ -592,12 +593,12 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
   	duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
 	runningTime =  time_span.count();											
 
-	result = printSolution(inputFileName, runningTime, objective, run, cout);		
+	//result = printSolution(inputFileName, runningTime, objective, run, cout);		
 	//result = printSolution(inputFileName, runningTime, objective, run, outputFile);		
 
 	termination();
 
-    return result;												
+    return best;												
 }
 
 void readProblem(string fileName) {
@@ -752,16 +753,7 @@ int printSolution(string inputFileName, double runningTime, int objective, int r
     s << "--- RUNNING TIME : " << runningTime << "\n\n";
     s << "# -------------------------- #\n"; */
 
-    switch(objective) {
-        case 1: 
-            return totalToolSwitches;
-        case 2:
-            return makespan;
-        case 3:
-            return 0; /* flowTime; */
-        default: 
-            return INT_MAX;
-    }
+    return best;
 }
 
 template <typename T>
