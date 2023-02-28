@@ -489,7 +489,6 @@ void VNS(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
         VND(evaluationFunction, evaluationVector);
         if (evaluationFunction() < best) {
             best = evaluationFunction();
-            cout << best << endl;
             bestSolution = npmJobAssignement;
         }
     }
@@ -500,7 +499,10 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
     while (k != 5) {
         switch(k) {
             case 1 :
-                if(!enableLS1) break;
+                if(!enableLS1) {
+                    k++;
+                    break;
+                }
                 switch(localSearch1) {
                     case 0 :
                         k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
@@ -520,7 +522,10 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
                 }
                 break;
             case 2 : 
-                if(!enableLS2) break;
+                if(!enableLS2) {
+                    k++;
+                    break;
+                }
                 switch(localSearch2) {
                     case 0 :
                         k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
@@ -540,7 +545,10 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
                 }
                 break;
             case 3 :
-                if (!enableLS3) break;
+                if(!enableLS3) {
+                    k++;
+                    break;
+                }
                 switch(localSearch3) {
                     case 0 :
                         k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
@@ -560,7 +568,10 @@ void VND(function<int(void)> evaluationFunction, vector<int> &evaluationVector) 
                 }
                 break;
             case 4 :
-                if(!enableLS4) break;
+                if(!enableLS4) {
+                    k++;
+                    break;
+                }
                 switch(localSearch4) {
                     case 0 :
                         k = jobInsertionLocalSearch(evaluationFunction, evaluationVector) ? 1 : k + 1;
