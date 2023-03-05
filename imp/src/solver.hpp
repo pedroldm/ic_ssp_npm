@@ -52,6 +52,12 @@ void jobExchangeDisturb();
 void twoOptDisturb();
 void swapDisturb();
 
+/* Constructive Heuristics */
+void constructInitialSolution();
+int minTSJ();
+int calcJobDifferences(int j1, int j2);
+int mostSimilarJob(vector<int> &rj, int machineIndex);
+
 /* I/O */
 int singleRun(string inputFileName, ofstream& outputFile, int run);
 void readProblem(string fileName);
@@ -188,7 +194,7 @@ int KTNS() {
     return accumulate(npmCurrentToolSwitches.begin(),npmCurrentToolSwitches.end(),0);
 }
 
-void createStartingSolution() {
+void randomInitialSolution() {
     vector<int> r(jobCount);
     iota(r.begin(), r.end(), 0);
 
@@ -370,7 +376,7 @@ int makespanEvaluation() {
 
 void multiStartRandom(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     for (int i = 0 ; i < 100 ; i++) {
-        createStartingSolution();
+        randomInitialSolution();
         while(jobInsertionLocalSearch(evaluationFunction, evaluationVector)  || 
                 jobExchangeLocalSearch(evaluationFunction, evaluationVector) || 
                 twoOptLocalSearch(evaluationFunction) ||
@@ -468,8 +474,61 @@ void swapDisturb() {
     swap(npmJobAssignement[m][r[0]], npmJobAssignement[m][r[1]]);
 }
 
+int minTSJ() {
+    set<tuple<int, int>> m;
+    GPCA();
+    
+    for(int i = 0 ; i < machineCount ; i++) {
+        m.insert(make_tuple(npmCurrentToolSwitches[i]/(int)npmJobAssignement[i].size(), i));
+    }
+    return get<1>(*m.begin());
+}
+
+int calcJobDifferences(int j1, int j2) {
+    int sum = 0;
+    for(int i = 0 ; i < toolCount ; i++) {
+        if(toolsRequirements[i][j1] == toolsRequirements[i][j2])
+            sum++;
+    }
+    return sum;
+}
+
+int mostSimilarJob(vector<int> &rj, int machineIndex) {
+    set<tuple<int, int>> j;
+    for(int i = 0 ; i < (int)rj.size() ; i++)
+        j.insert(make_tuple(calcJobDifferences(npmJobAssignement[machineIndex].back(), rj[i]), rj[i]));
+
+    rj.erase(remove(rj.begin(), rj.end(), get<1>(*j.rbegin())), rj.end());
+    return get<1>(*j.rbegin());
+}
+
+void constructInitialSolution() {
+    mt19937 rng(random_device{}());
+    vector<int> rj(jobCount);
+    set<tuple<int,int>> remainingJobs;
+    iota(rj.begin(), rj.end(), 0);
+    shuffle(rj.begin(), rj.end(), rng);
+
+    for(int i = 0 ; i < machineCount ; i++) {
+        for(int j = 0 ; j < jobCount ; j++) {
+            if(jobEligibility[i][rj[j]]) {
+                npmJobAssignement[i].push_back(rj[j]);
+                rj.erase(rj.begin() + j);
+                break;
+            }
+        }
+    }
+
+    int remaining = (int)rj.size();
+    for(int i = 0 ; i < remaining ; i++) {
+        int machineToReceive = minTSJ();
+        int msJob = mostSimilarJob(rj, machineToReceive);
+        npmJobAssignement[machineToReceive].push_back(msJob);
+    }
+}
+
 void VNS(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
-    createStartingSolution();
+    constructInitialSolution();
 
     while(maxIterations--) {
         switch(vnsDisturb) {
