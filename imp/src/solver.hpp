@@ -105,10 +105,10 @@ vector<vector<int>> toolsDistancesGPCA; /* tools distances for replacement on GP
 vector<vector<int>> jobEligibility; /* eligibility matrix */
 
 int flowtimeEvaluation() {
-    flowtimeSum = 0;
     npmCurrentFlowTime = 0;
 
     for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
+        flowtimeSum = 0;
         int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size(), empty; /* .size() -> O(1)*/
         npmCurrentToolSwitches[machineIndex] = 0;
         if(!npmJobAssignement[machineIndex].size())
@@ -728,12 +728,11 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
 	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
 
   	duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
-	runningTime =  time_span.count();											
+	runningTime = time_span.count();											
 
     npmJobAssignement = bestSolution;
 	printSolution(inputFileName, runningTime, objective, run, cout);		
 	printSolution(inputFileName, runningTime, objective, run, outputFile);		
-	termination();
 
     switch(objective) {
         case 1 : 
