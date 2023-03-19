@@ -638,7 +638,7 @@ void ILSFull(function<int(void)> evaluationFunction) {
 
     int iterations = 0;
     while(iterations++ < maxIterations) {
-        for(int i = 0 ; i < disturbSize ; i++)
+        for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++)
             jobInsertionDisturb();
         VNDFull(evaluationFunction);
         if (evaluationFunction() < best)
@@ -674,7 +674,7 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
     int iterations = 0;
     while(iterations++ < maxIterations) {
-        for(int i = 0 ; i < disturbSize ; i++)
+        for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++)
             jobInsertionDisturb();
         VNDCrit(evaluationFunction, evaluationVector);
         if (evaluationFunction() < best)
@@ -823,7 +823,6 @@ void initialization() {
         toolsDistancesGPCA[i].resize(jobCount);
     magazines.resize(2);
 
-    disturbSize = ceil(disturbSize * jobCount);
     best = INT_MAX;
 }
 
