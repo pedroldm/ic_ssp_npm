@@ -638,30 +638,28 @@ void ILSFull(function<int(void)> evaluationFunction) {
 
     int iterations = 0;
     while(iterations++ < maxIterations) {
+        npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++)
             jobInsertionDisturb();
         VNDFull(evaluationFunction);
-        if (evaluationFunction() < best)
+        if (evaluationFunction() <= best)
             updateBestSolution(evaluationFunction);
     }
 }
 
 void VNDFull(function<int(void)> evaluationFunction) {
     int k = 1;
-    while (k != 5) {
+    while (k != 4) {
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
-                k = swapLocalSearch(evaluationFunction, currentBest) ? 1 : k + 1;
+                k = jobExchangeLocalSearchFull(evaluationFunction, currentBest) ? 1 : k + 1;
                 break;
             case 2 : 
-                k = jobExchangeLocalSearchFull(evaluationFunction, currentBest) ? 1 : k + 1;
+                k = swapLocalSearch(evaluationFunction, currentBest) ? 1 : k + 1;
                 break;
             case 3 :
                 k = twoOptLocalSearch(evaluationFunction, currentBest) ? 1 : k + 1;
-                break;
-            case 4 :
-                k = oneBlockLocalSearch(evaluationFunction, currentBest) ? 1 : k + 1;
                 break;
         }
     }
@@ -674,30 +672,28 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
     int iterations = 0;
     while(iterations++ < maxIterations) {
+        npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++)
             jobInsertionDisturb();
         VNDCrit(evaluationFunction, evaluationVector);
-        if (evaluationFunction() < best)
+        if (evaluationFunction() <= best)
             updateBestSolution(evaluationFunction);
     }
 }
 
 void VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 5) {
+    while (k != 4) {
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
-                k = swapLocalSearch(evaluationFunction, currentBest) ? 1 : k + 1;
+                k = jobExchangeLocalSearchFull(evaluationFunction, currentBest) ? 1 : k + 1;
                 break;
             case 2 : 
-                k = jobExchangeLocalSearchCrit(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                k = swapLocalSearch(evaluationFunction, currentBest) ? 1 : k + 1;
                 break;
             case 3 :
                 k = twoOptLocalSearch(evaluationFunction, currentBest) ? 1 : k + 1;
-                break;
-            case 4 :
-                k = oneBlockLocalSearch(evaluationFunction, currentBest) ? 1 : k + 1;
                 break;
         }
     }
