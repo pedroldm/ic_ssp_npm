@@ -23,6 +23,8 @@ int main(int argc, char* argv[])
     else
         throw invalid_argument("ERROR : Input file not well informed");
     cout << endl << endl << "avg : " << (double)sum / (double)avg << endl;
+    if(outputFile.is_open())
+        outputFile << endl << endl << "avg : " << (double)sum / (double)avg << endl;
 }
 
 void parseArguments(vector<string> arguments) {
