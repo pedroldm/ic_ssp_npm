@@ -81,30 +81,30 @@ ostream& operator<<(ostream& os, const vector<tuple<T, T>>& vector);
 void initialization();
 void termination();
 
-int runs, objective, maxIterations, flowtimeSum, flowtimeAux, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
-int machineCount, toolCount, jobCount, currentBest, best; /* quantity of machines, tools, jobs and current best solution value */
-int enableLS1, enableLS2, enableLS3, enableLS4; /* quantity of machines, tools, jobs and current best solution value */
-float disturbSize = 0.10;
+int runs = 1, objective, maxIterations = 1000, flowtimeSum, flowtimeAux, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
+int machineCount, toolCount, jobCount, currentBest, best, beforeSwap1, beforeSwap2, maxTime = 3600;
+float disturbSize = 0.05;
+duration<double>time_span;
 string instance, inputFileName, ans;
 ifstream fpIndex;
 ofstream outputFile;
-vector<vector<int>> npmJobAssignement, bestSolution; /* current jobs and tools assigned to each machine and best solution assignements */
-vector<vector<int>> toolsRequirements; /* jobs and tools requirements */
-vector<vector<int>> npmJobTime; /* time cost of each job on each machine */
-vector<vector<int>> npmCurrentMagazines; /* current magazines of each machine */
-vector<vector<int>> npmToolsNeedDistance; /* current magazines of each machine */
-vector<int> npmMagazineCapacity; /* magazine capacity of each machine */
-vector<int> npmSwitchCost; /* switch cost of each machine */
-vector<int> npmCurrentToolSwitches; /* current switches count of each machine */
-vector<int> npmCurrentMakespan; /* current makespan of each machine */
+vector<vector<int>> npmJobAssignement, bestSolution;
+vector<vector<int>> toolsRequirements;
+vector<vector<int>> npmJobTime;
+vector<vector<int>> npmCurrentMagazines;
+vector<vector<int>> npmToolsNeedDistance;
+vector<int> npmMagazineCapacity;
+vector<int> npmSwitchCost;
+vector<int> npmCurrentToolSwitches;
+vector<int> npmCurrentMakespan;
 vector<int>npmCurrentFlowTime;
-vector<set<int>> jobSets; /* tool occurrence for each job */
-vector<set<int>> magazines; /* magazines */
-set<tuple<int, int>> dist; /* tools distances for replacement on KTNS */
-vector<vector<int>> toolsDistancesGPCA; /* tools distances for replacement on GPCA */
-vector<vector<int>> jobEligibility; /* eligibility matrix */
+vector<set<int>> jobSets;
+vector<set<int>> magazines;
+set<tuple<int, int>> dist;
+vector<vector<int>> toolsDistancesGPCA;
+vector<vector<int>> jobEligibility;
 vector<int> mI;
-int beforeSwap1, beforeSwap2;
+high_resolution_clock::time_point t1, t2;
 
 int flowtimeEvaluation() {
     if(mI.empty()) {
@@ -705,8 +705,13 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         mI.clear();
         evaluationFunction();
         VNDFull(evaluationFunction, evaluationVector);
+
         if (evaluationFunction() <= best)
             updateBestSolution(evaluationFunction);
+            
+        time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
+        if(time_span.count() >= maxTime)
+            break;
     }
 }
 
@@ -744,6 +749,10 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         VNDCrit(evaluationFunction, evaluationVector);
         if (evaluationFunction() <= best)
             updateBestSolution(evaluationFunction);
+
+        time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
+        if(time_span.count() >= maxTime)
+            break;
     }
 }
 
@@ -770,7 +779,7 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
     readProblem(inputFileName);
     checkMachinesEligibility();
 
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	t1 = high_resolution_clock::now();
 
     switch(objective) {
         case 1 : 
@@ -784,9 +793,7 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
             break;
     }
 
-	high_resolution_clock::time_point t2 = high_resolution_clock::now(); 
-
-  	duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+  	duration<double> time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
 	runningTime = time_span.count();											
 
     npmJobAssignement = bestSolution;
