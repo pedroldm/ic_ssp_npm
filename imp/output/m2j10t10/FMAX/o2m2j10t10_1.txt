@@ -1,0 +1,883 @@
+RUN : 1 - instancias_txt/SSP-NPM-I/ins1_m=2_j=10_t=10_var=1.txt
+
+- MACHINE [0]
+
+0 0 1 0 
+0 0 0 1 
+1 1 0 0 
+1 1 1 1 
+1 0 0 0 
+1 0 1 0 
+0 0 0 0 
+0 0 1 1 
+0 1 1 0 
+1 0 0 0 
+
+JOBS [4] - [8, 3, 9, 0]
+TOOL SWITCHES : 4
+MAKESPAN : 32
+
+- MACHINE [1]
+
+0 1 0 1 0 1 
+1 1 0 0 1 1 
+0 1 1 1 1 0 
+0 0 0 0 0 0 
+1 1 1 1 1 0 
+0 0 0 0 0 0 
+1 1 1 1 0 1 
+0 0 0 0 0 0 
+0 0 1 1 1 0 
+1 0 1 0 0 0 
+
+JOBS [6] - [1, 7, 5, 2, 6, 4]
+TOOL SWITCHES : 0
+MAKESPAN : 29
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 4
+--- HIGHEST MAKESPAN : 32
+--- TOTAL FLOWTIME : 204
+--- RUNNING TIME : 0.266996
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins2_m=2_j=10_t=10_var=2.txt
+
+- MACHINE [0]
+
+1 1 0 0 0 0 
+1 1 1 0 0 0 
+0 0 0 0 0 0 
+0 0 0 0 1 1 
+1 0 0 1 1 0 
+1 1 0 1 0 0 
+0 0 0 0 1 1 
+0 0 1 0 0 1 
+0 1 1 0 0 0 
+0 0 1 1 1 1 
+
+JOBS [6] - [2, 5, 3, 9, 7, 1]
+TOOL SWITCHES : 5
+MAKESPAN : 32
+
+- MACHINE [1]
+
+1 1 0 1 
+0 0 1 0 
+0 0 0 1 
+1 0 1 1 
+1 1 0 0 
+1 0 1 1 
+0 0 0 0 
+1 1 0 0 
+0 0 0 1 
+0 1 0 0 
+
+JOBS [4] - [4, 6, 8, 0]
+TOOL SWITCHES : 2
+MAKESPAN : 32
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 7
+--- HIGHEST MAKESPAN : 32
+--- TOTAL FLOWTIME : 189
+--- RUNNING TIME : 0.278804
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins3_m=2_j=10_t=10_var=3.txt
+
+- MACHINE [0]
+
+0 0 0 0 1 
+0 0 0 0 0 
+1 1 1 1 1 
+1 0 1 0 0 
+0 0 0 1 0 
+0 0 1 0 1 
+1 1 1 1 0 
+1 1 0 0 0 
+1 1 0 0 0 
+0 0 0 1 0 
+
+JOBS [5] - [7, 4, 1, 3, 8]
+TOOL SWITCHES : 4
+MAKESPAN : 30
+
+- MACHINE [1]
+
+1 0 0 0 1 
+1 0 0 0 1 
+0 0 0 1 0 
+0 1 1 1 0 
+1 0 0 0 0 
+0 0 0 1 0 
+0 1 1 0 1 
+1 1 1 0 0 
+0 1 1 0 0 
+1 0 0 1 0 
+
+JOBS [5] - [6, 0, 2, 5, 9]
+TOOL SWITCHES : 3
+MAKESPAN : 29
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 7
+--- HIGHEST MAKESPAN : 30
+--- TOTAL FLOWTIME : 165
+--- RUNNING TIME : 0.35168
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins4_m=2_j=10_t=10_var=4.txt
+
+- MACHINE [0]
+
+1 0 1 0 
+0 0 1 0 
+1 0 0 0 
+0 0 1 0 
+0 0 0 1 
+1 0 0 0 
+0 1 1 1 
+1 0 0 0 
+0 1 0 1 
+0 1 1 1 
+
+JOBS [4] - [8, 3, 2, 9]
+TOOL SWITCHES : 6
+MAKESPAN : 23
+
+- MACHINE [1]
+
+0 0 0 0 0 1 
+0 1 1 0 1 0 
+0 0 0 0 0 0 
+0 0 0 0 0 0 
+1 0 1 1 0 1 
+0 1 0 1 1 0 
+0 0 0 1 1 1 
+1 0 1 0 1 0 
+0 0 0 0 1 1 
+1 1 0 1 0 0 
+
+JOBS [6] - [5, 6, 1, 0, 4, 7]
+TOOL SWITCHES : 1
+MAKESPAN : 24
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 7
+--- HIGHEST MAKESPAN : 24
+--- TOTAL FLOWTIME : 127
+--- RUNNING TIME : 0.280582
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins5_m=2_j=10_t=10_var=5.txt
+
+- MACHINE [0]
+
+1 0 1 1 1 1 
+0 1 0 0 0 0 
+0 1 0 1 0 0 
+1 1 1 0 0 0 
+1 1 0 1 1 1 
+1 1 1 0 0 0 
+0 0 0 1 1 0 
+0 0 0 0 0 0 
+0 0 0 1 1 1 
+0 0 0 0 0 0 
+
+JOBS [6] - [4, 1, 3, 9, 7, 5]
+TOOL SWITCHES : 4
+MAKESPAN : 22
+
+- MACHINE [1]
+
+1 1 1 0 
+0 0 1 1 
+0 1 0 1 
+1 1 0 1 
+0 0 0 0 
+0 0 0 0 
+0 0 0 0 
+1 0 1 0 
+0 1 0 0 
+1 0 1 0 
+
+JOBS [4] - [6, 8, 2, 0]
+TOOL SWITCHES : 0
+MAKESPAN : 22
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 4
+--- HIGHEST MAKESPAN : 22
+--- TOTAL FLOWTIME : 134
+--- RUNNING TIME : 0.26346
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins6_m=2_j=10_t=10_var=6.txt
+
+- MACHINE [0]
+
+0 0 0 0 0 
+1 0 0 0 0 
+1 1 0 1 0 
+0 1 1 1 0 
+0 0 0 1 1 
+0 1 1 0 0 
+1 0 0 0 1 
+0 0 1 1 1 
+1 0 0 0 0 
+1 1 1 1 0 
+
+JOBS [5] - [4, 9, 5, 8, 2]
+TOOL SWITCHES : 5
+MAKESPAN : 25
+
+- MACHINE [1]
+
+1 0 1 0 0 
+0 0 1 0 1 
+0 0 0 1 1 
+1 1 1 1 0 
+0 1 0 0 1 
+1 0 0 1 0 
+0 1 0 0 0 
+0 0 0 0 0 
+0 0 0 1 1 
+1 0 1 0 0 
+
+JOBS [5] - [6, 3, 0, 1, 7]
+TOOL SWITCHES : 2
+MAKESPAN : 26
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 7
+--- HIGHEST MAKESPAN : 26
+--- TOTAL FLOWTIME : 157
+--- RUNNING TIME : 0.276671
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins7_m=2_j=10_t=10_var=7.txt
+
+- MACHINE [0]
+
+1 1 0 0 0 
+1 1 1 0 1 
+1 0 0 1 0 
+0 0 0 0 0 
+0 0 0 1 0 
+0 1 1 0 0 
+0 0 1 1 1 
+1 1 1 0 1 
+0 0 0 0 1 
+0 0 0 0 1 
+
+JOBS [5] - [0, 9, 8, 4, 5]
+TOOL SWITCHES : 4
+MAKESPAN : 32
+
+- MACHINE [1]
+
+1 1 0 1 0 
+0 0 0 0 0 
+0 0 1 1 1 
+0 1 1 1 0 
+0 1 1 0 1 
+1 1 0 1 0 
+1 1 0 0 0 
+0 1 1 1 0 
+1 0 0 0 0 
+0 1 0 0 1 
+
+JOBS [5] - [6, 7, 2, 1, 3]
+TOOL SWITCHES : 2
+MAKESPAN : 30
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 6
+--- HIGHEST MAKESPAN : 32
+--- TOTAL FLOWTIME : 193
+--- RUNNING TIME : 0.246887
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins8_m=2_j=10_t=10_var=8.txt
+
+- MACHINE [0]
+
+1 1 0 0 
+0 1 1 1 
+0 0 1 0 
+0 0 0 1 
+1 0 0 1 
+0 0 1 0 
+0 1 0 0 
+0 0 0 1 
+1 0 0 0 
+1 1 1 0 
+
+JOBS [4] - [4, 7, 9, 1]
+TOOL SWITCHES : 5
+MAKESPAN : 30
+
+- MACHINE [1]
+
+0 0 0 0 0 0 
+1 1 0 0 0 0 
+0 0 1 1 0 1 
+0 1 0 1 1 0 
+1 1 0 0 1 0 
+1 1 1 1 0 1 
+1 0 1 1 1 0 
+0 0 1 0 1 1 
+0 0 0 0 1 1 
+0 1 1 1 0 0 
+
+JOBS [6] - [6, 8, 5, 2, 0, 3]
+TOOL SWITCHES : 2
+MAKESPAN : 30
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 7
+--- HIGHEST MAKESPAN : 30
+--- TOTAL FLOWTIME : 184
+--- RUNNING TIME : 0.301402
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins9_m=2_j=10_t=10_var=9.txt
+
+- MACHINE [0]
+
+1 1 0 0 
+0 0 0 0 
+1 0 1 1 
+1 0 0 0 
+0 1 1 1 
+1 1 0 0 
+0 1 1 1 
+0 0 1 0 
+0 0 0 1 
+0 0 0 0 
+
+JOBS [4] - [3, 7, 0, 6]
+TOOL SWITCHES : 3
+MAKESPAN : 30
+
+- MACHINE [1]
+
+0 1 1 0 1 0 
+0 0 1 1 0 0 
+0 1 0 1 1 0 
+1 1 0 1 0 1 
+1 0 0 0 0 0 
+0 0 1 0 1 1 
+1 1 0 0 0 0 
+0 0 0 0 0 0 
+1 1 0 0 0 1 
+1 1 1 1 1 1 
+
+JOBS [6] - [4, 8, 1, 9, 5, 2]
+TOOL SWITCHES : 2
+MAKESPAN : 31
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 5
+--- HIGHEST MAKESPAN : 31
+--- TOTAL FLOWTIME : 165
+--- RUNNING TIME : 0.300601
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins10_m=2_j=10_t=10_var=10.txt
+
+- MACHINE [0]
+
+0 0 1 0 1 
+0 1 0 0 0 
+0 0 0 0 0 
+0 0 0 0 1 
+1 1 0 0 0 
+0 1 1 1 0 
+1 1 0 1 1 
+1 0 0 1 1 
+0 0 1 0 0 
+0 0 0 0 1 
+
+JOBS [5] - [6, 8, 2, 3, 4]
+TOOL SWITCHES : 4
+MAKESPAN : 32
+
+- MACHINE [1]
+
+1 1 0 0 1 
+1 1 1 0 0 
+0 1 1 1 1 
+0 1 0 1 1 
+0 1 1 0 1 
+0 0 0 0 1 
+0 0 1 1 1 
+1 1 0 0 0 
+0 0 0 0 0 
+1 1 0 1 1 
+
+JOBS [5] - [1, 7, 5, 0, 9]
+TOOL SWITCHES : 2
+MAKESPAN : 29
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 6
+--- HIGHEST MAKESPAN : 32
+--- TOTAL FLOWTIME : 167
+--- RUNNING TIME : 0.241676
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins11_m=2_j=10_t=10_var=11.txt
+
+- MACHINE [0]
+
+0 0 1 1 0 
+1 1 1 0 0 
+0 0 0 1 1 
+1 0 1 0 1 
+0 1 0 0 0 
+0 0 0 0 0 
+0 1 0 1 1 
+1 0 0 1 0 
+1 0 1 0 1 
+0 0 0 0 1 
+
+JOBS [5] - [1, 4, 3, 0, 6]
+TOOL SWITCHES : 6
+MAKESPAN : 32
+
+- MACHINE [1]
+
+0 0 0 1 1 
+1 1 0 1 1 
+1 0 1 1 0 
+1 1 0 0 0 
+1 0 0 1 0 
+1 1 1 0 1 
+0 0 0 0 0 
+0 1 0 0 0 
+0 0 1 1 0 
+1 0 1 0 0 
+
+JOBS [5] - [5, 8, 2, 7, 9]
+TOOL SWITCHES : 2
+MAKESPAN : 33
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 8
+--- HIGHEST MAKESPAN : 33
+--- TOTAL FLOWTIME : 195
+--- RUNNING TIME : 0.283239
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins12_m=2_j=10_t=10_var=12.txt
+
+- MACHINE [0]
+
+1 1 1 0 0 
+0 0 0 0 1 
+0 0 1 1 0 
+0 0 0 1 1 
+1 1 0 1 1 
+0 1 1 0 0 
+1 1 0 0 0 
+1 0 0 0 0 
+0 0 1 1 1 
+0 0 1 1 0 
+
+JOBS [5] - [9, 2, 4, 5, 0]
+TOOL SWITCHES : 6
+MAKESPAN : 35
+
+- MACHINE [1]
+
+1 1 0 1 0 
+0 0 0 1 1 
+0 1 1 1 1 
+1 1 0 0 0 
+1 1 1 0 0 
+1 0 1 0 0 
+0 1 0 1 0 
+0 0 1 1 0 
+0 0 1 1 0 
+0 0 0 1 1 
+
+JOBS [5] - [7, 1, 8, 6, 3]
+TOOL SWITCHES : 3
+MAKESPAN : 35
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 9
+--- HIGHEST MAKESPAN : 35
+--- TOTAL FLOWTIME : 184
+--- RUNNING TIME : 0.228256
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins13_m=2_j=10_t=10_var=13.txt
+
+- MACHINE [0]
+
+1 0 0 0 
+1 1 0 1 
+0 0 1 0 
+0 0 0 1 
+1 0 0 0 
+0 0 1 0 
+1 1 1 1 
+1 1 0 0 
+0 0 1 1 
+0 1 0 1 
+
+JOBS [4] - [4, 5, 1, 7]
+TOOL SWITCHES : 6
+MAKESPAN : 23
+
+- MACHINE [1]
+
+1 0 1 1 1 0 
+0 0 0 1 1 1 
+0 0 0 1 0 1 
+1 0 1 0 0 0 
+0 1 0 1 1 1 
+0 1 1 0 1 0 
+0 0 0 0 0 0 
+1 0 0 0 0 0 
+0 1 1 0 0 1 
+1 0 0 0 1 1 
+
+JOBS [6] - [9, 2, 3, 0, 8, 6]
+TOOL SWITCHES : 2
+MAKESPAN : 25
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 8
+--- HIGHEST MAKESPAN : 25
+--- TOTAL FLOWTIME : 134
+--- RUNNING TIME : 0.361245
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins14_m=2_j=10_t=10_var=14.txt
+
+- MACHINE [0]
+
+0 1 0 1 
+1 0 0 0 
+1 1 0 1 
+0 0 1 1 
+1 0 0 0 
+0 0 0 0 
+0 1 1 0 
+0 1 0 0 
+1 1 1 1 
+0 0 0 1 
+
+JOBS [4] - [1, 9, 2, 4]
+TOOL SWITCHES : 4
+MAKESPAN : 32
+
+- MACHINE [1]
+
+0 0 1 0 0 1 
+1 1 0 0 0 0 
+0 0 0 0 0 0 
+0 1 1 1 0 1 
+1 0 0 0 1 1 
+1 0 1 1 1 0 
+1 0 1 1 0 0 
+0 1 1 1 1 1 
+0 1 1 0 1 1 
+1 0 1 1 1 1 
+
+JOBS [6] - [3, 7, 6, 0, 5, 8]
+TOOL SWITCHES : 3
+MAKESPAN : 34
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 7
+--- HIGHEST MAKESPAN : 34
+--- TOTAL FLOWTIME : 198
+--- RUNNING TIME : 0.246599
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins15_m=2_j=10_t=10_var=15.txt
+
+- MACHINE [0]
+
+1 1 1 0 0 0 
+1 1 1 0 0 0 
+0 0 0 0 1 1 
+0 0 0 1 1 1 
+1 0 0 0 0 1 
+0 0 1 1 0 0 
+0 0 0 0 0 0 
+0 1 1 1 1 0 
+0 0 0 0 1 1 
+1 0 0 0 0 0 
+
+JOBS [6] - [3, 6, 0, 2, 1, 7]
+TOOL SWITCHES : 4
+MAKESPAN : 32
+
+- MACHINE [1]
+
+0 1 1 1 
+1 0 0 1 
+1 1 0 0 
+1 1 0 0 
+0 0 1 1 
+0 0 0 0 
+1 0 0 1 
+0 0 0 0 
+0 0 1 0 
+0 1 1 0 
+
+JOBS [4] - [9, 8, 5, 4]
+TOOL SWITCHES : 1
+MAKESPAN : 32
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 5
+--- HIGHEST MAKESPAN : 32
+--- TOTAL FLOWTIME : 166
+--- RUNNING TIME : 0.313169
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins16_m=2_j=10_t=10_var=16.txt
+
+- MACHINE [0]
+
+0 1 1 0 
+1 1 0 0 
+0 0 0 1 
+0 0 0 0 
+0 0 1 1 
+1 0 1 0 
+1 1 0 0 
+0 0 1 1 
+0 1 0 0 
+1 0 1 0 
+
+JOBS [4] - [7, 6, 9, 5]
+TOOL SWITCHES : 5
+MAKESPAN : 26
+
+- MACHINE [1]
+
+0 0 0 0 0 0 
+0 1 0 0 0 1 
+0 0 1 1 0 0 
+1 1 0 0 0 0 
+0 1 0 0 0 1 
+0 0 0 0 1 1 
+0 1 1 0 0 1 
+1 0 0 1 1 1 
+1 0 1 1 0 0 
+1 1 0 1 1 0 
+
+JOBS [6] - [2, 8, 4, 1, 0, 3]
+TOOL SWITCHES : 2
+MAKESPAN : 28
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 7
+--- HIGHEST MAKESPAN : 28
+--- TOTAL FLOWTIME : 153
+--- RUNNING TIME : 0.288819
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins17_m=2_j=10_t=10_var=17.txt
+
+- MACHINE [0]
+
+1 1 0 0 1 1 
+1 0 0 0 0 0 
+0 0 0 0 0 1 
+1 1 1 0 1 1 
+0 1 1 1 0 0 
+1 1 0 0 0 0 
+0 0 1 0 0 0 
+0 0 0 1 1 0 
+0 0 0 0 1 1 
+1 0 1 1 1 1 
+
+JOBS [6] - [8, 9, 7, 6, 1, 4]
+TOOL SWITCHES : 5
+MAKESPAN : 29
+
+- MACHINE [1]
+
+1 1 0 0 
+1 0 1 1 
+1 0 0 0 
+0 0 0 0 
+1 1 0 1 
+0 0 0 0 
+1 1 0 1 
+0 0 0 0 
+0 0 1 1 
+0 0 1 0 
+
+JOBS [4] - [5, 2, 0, 3]
+TOOL SWITCHES : 0
+MAKESPAN : 28
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 5
+--- HIGHEST MAKESPAN : 29
+--- TOTAL FLOWTIME : 164
+--- RUNNING TIME : 0.244426
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins18_m=2_j=10_t=10_var=18.txt
+
+- MACHINE [0]
+
+0 1 0 1 1 
+1 0 1 0 0 
+0 1 1 0 0 
+1 1 1 1 1 
+1 0 0 0 0 
+1 0 0 0 0 
+0 0 0 0 1 
+0 0 0 1 1 
+1 1 0 0 1 
+0 0 0 1 0 
+
+JOBS [5] - [9, 2, 8, 7, 4]
+TOOL SWITCHES : 5
+MAKESPAN : 25
+
+- MACHINE [1]
+
+0 0 0 1 0 
+1 0 0 1 0 
+0 0 0 0 0 
+0 0 0 0 0 
+1 1 1 0 1 
+1 0 0 1 0 
+0 1 1 0 0 
+1 0 1 0 0 
+0 1 0 1 1 
+0 0 1 0 1 
+
+JOBS [5] - [6, 1, 5, 3, 0]
+TOOL SWITCHES : 1
+MAKESPAN : 26
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 6
+--- HIGHEST MAKESPAN : 26
+--- TOTAL FLOWTIME : 143
+--- RUNNING TIME : 0.27011
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins19_m=2_j=10_t=10_var=19.txt
+
+- MACHINE [0]
+
+0 1 0 1 1 
+1 0 0 0 1 
+1 0 1 0 0 
+0 0 0 0 0 
+0 0 1 0 1 
+0 0 0 0 0 
+1 1 1 1 1 
+0 0 0 1 0 
+0 1 0 1 1 
+1 1 0 0 0 
+
+JOBS [5] - [3, 1, 4, 0, 9]
+TOOL SWITCHES : 4
+MAKESPAN : 29
+
+- MACHINE [1]
+
+1 0 0 0 1 
+0 0 1 1 0 
+0 1 0 0 0 
+0 1 0 1 0 
+0 0 0 1 1 
+1 1 0 1 0 
+0 0 0 0 1 
+1 1 1 0 0 
+0 1 1 0 0 
+1 0 0 1 0 
+
+JOBS [5] - [6, 8, 5, 2, 7]
+TOOL SWITCHES : 3
+MAKESPAN : 32
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 7
+--- HIGHEST MAKESPAN : 32
+--- TOTAL FLOWTIME : 164
+--- RUNNING TIME : 0.310907
+
+# -------------------------- #
+RUN : 1 - instancias_txt/SSP-NPM-I/ins20_m=2_j=10_t=10_var=20.txt
+
+- MACHINE [0]
+
+0 0 0 1 1 
+1 0 0 0 0 
+1 1 1 0 1 
+0 0 1 1 0 
+0 1 0 1 1 
+1 1 0 0 1 
+0 1 0 0 0 
+1 1 0 0 0 
+0 0 0 1 1 
+0 0 1 1 1 
+
+JOBS [5] - [6, 7, 0, 3, 8]
+TOOL SWITCHES : 7
+MAKESPAN : 29
+
+- MACHINE [1]
+
+1 0 1 1 0 
+1 1 1 1 1 
+0 1 1 0 1 
+0 0 0 1 0 
+0 1 1 0 0 
+1 0 0 0 0 
+1 0 1 0 1 
+0 1 0 1 0 
+0 0 0 0 1 
+0 0 0 0 0 
+
+JOBS [5] - [9, 5, 1, 4, 2]
+TOOL SWITCHES : 2
+MAKESPAN : 28
+
+# -------------------------- #
+
+--- TOTAL TOOL SWITCHES : 9
+--- HIGHEST MAKESPAN : 29
+--- TOTAL FLOWTIME : 139
+--- RUNNING TIME : 0.313226
+
+# -------------------------- #
+
+
+avg : 29.7
