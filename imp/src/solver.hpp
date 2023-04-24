@@ -43,7 +43,8 @@ int flowtimeEvaluation();
 /* 2 */ bool jobExchangeLocalSearchCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);
 /* 2 */ bool jobExchangeLocalSearchFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);
 /* 3 */ bool swapLocalSearch(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);
-/* 4 */ bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, int currentBest);
+bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, vector<int>& evaluationVector, int currentBest);
+bool oneBlockLocalSearchCrit(function<int(void)> &evaluationFunction, vector<int>& evaluationVector, int currentBest);
 vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool);
 
 /* Metaheuristics */
@@ -83,27 +84,17 @@ void termination();
 
 int runs = 1, objective, maxIterations = 1000, flowtimeSum, flowtimeAux, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
 int machineCount, toolCount, jobCount, currentBest, best, beforeSwap1, beforeSwap2, maxTime = 3600;
-float disturbSize = 0.05;
-duration<double>time_span;
+float disturbSize = 0.05, oneBlockPercentage = 0.25;
+duration<double> time_span;
 string instance, inputFileName, ans;
 ifstream fpIndex;
 ofstream outputFile;
-vector<vector<int>> npmJobAssignement, bestSolution;
-vector<vector<int>> toolsRequirements;
-vector<vector<int>> npmJobTime;
-vector<vector<int>> npmCurrentMagazines;
-vector<vector<int>> npmToolsNeedDistance;
-vector<int> npmMagazineCapacity;
-vector<int> npmSwitchCost;
-vector<int> npmCurrentToolSwitches;
-vector<int> npmCurrentMakespan;
-vector<int>npmCurrentFlowTime;
-vector<set<int>> jobSets;
-vector<set<int>> magazines;
+vector<vector<int>> npmJobAssignement, bestSolution, toolsRequirements, npmJobTime, npmCurrentMagazines, npmToolsNeedDistance;
+vector<int> npmMagazineCapacity, npmSwitchCost, npmCurrentToolSwitches, npmCurrentMakespan, npmCurrentFlowTime, mI, randomTools;
+vector<set<int>> jobSets, magazines;
 set<tuple<int, int>> dist;
-vector<vector<int>> toolsDistancesGPCA;
-vector<vector<int>> jobEligibility;
-vector<int> mI;
+vector<vector<int>> toolsDistancesGPCA, jobEligibility;
+vector<tuple<int,int>> oneBlocks;
 high_resolution_clock::time_point t1, t2;
 
 int flowtimeEvaluation() {
@@ -470,12 +461,16 @@ vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool) {
     return oneBlocks;
 }
 
-bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, int currentBest) {
+bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, vector<int>& evaluationVector, int currentBest) {
     int job;
-    vector<tuple<int,int>> oneBlocks;
+
+    mt19937 rng(random_device{}());
+    shuffle(randomTools.begin(), randomTools.end(), rng);
 
     for(int i = 0 ; i < machineCount ; i++) {
-        for(int j = 0 ; j < toolCount ; j++) {
+        mI = {i};
+        beforeSwap1 = evaluationVector[i];
+        for(int j : randomTools) {
             oneBlocks = findOneBlocks(i, j);
             for(int remove = 0 ; remove < (int)oneBlocks.size() ; remove++) {
                 for(int insert = 0 ; insert < (int)oneBlocks.size() ; insert++) {
@@ -486,20 +481,17 @@ bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, int currentBes
                         if(insert > remove) {
                             npmJobAssignement[i].insert(npmJobAssignement[i].begin() + get<0>(oneBlocks[insert]), job);
                             npmJobAssignement[i].erase(npmJobAssignement[i].begin() + m);
-                            mI = {i};
                             if(evaluationFunction() < currentBest) {
+                                mI.clear();
                                 return true;
                             }
-                            mI.clear();
                         
                             for(int n = get<0>(oneBlocks[insert]) - 1; n < get<1>(oneBlocks[insert]); n++) {
                                 swap(npmJobAssignement[i][n], npmJobAssignement[i][n + 1]);
-                                mI = {i};
                                 if(evaluationFunction() < currentBest) {
                                     mI.clear();
                                     return true;
                                 }
-                                mI.clear();
                             }
 
                             npmJobAssignement[i].erase(npmJobAssignement[i].begin() + get<1>(oneBlocks[insert]));
@@ -508,12 +500,10 @@ bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, int currentBes
                         else {
                             npmJobAssignement[i].erase(npmJobAssignement[i].begin() + m);
                             npmJobAssignement[i].insert(npmJobAssignement[i].begin() + get<0>(oneBlocks[insert]), job);
-                            mI = {i};
                             if(evaluationFunction() < currentBest) {
                                 mI.clear();
                                 return true;
                             }
-                            mI.clear();
 
                             for(int n = get<0>(oneBlocks[insert]); n <= get<1>(oneBlocks[insert]); n++) {
                                 swap(npmJobAssignement[i][n], npmJobAssignement[i][n + 1]);
@@ -521,7 +511,6 @@ bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, int currentBes
                                     mI.clear();
                                     return true;
                                 }
-                                mI.clear();
                             }
 
                             npmJobAssignement[i].erase(npmJobAssignement[i].begin() + get<1>(oneBlocks[insert]) + 1);
@@ -531,7 +520,74 @@ bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, int currentBes
                 }
             }
         }
+        evaluationVector[i] = beforeSwap1;
     }
+
+    mI.clear();
+    return false;
+}
+
+bool oneBlockLocalSearchCrit(function<int(void)> &evaluationFunction, vector<int>& evaluationVector, int currentBest) {
+    int job, criticalMachine = distance(evaluationVector.begin(),max_element(evaluationVector.begin(), evaluationVector.end()));
+
+    mt19937 rng(random_device{}());
+    shuffle(randomTools.begin(), randomTools.end(), rng);
+
+    mI = {criticalMachine};
+    beforeSwap1 = evaluationVector[criticalMachine];
+    for(int j : randomTools) {
+        oneBlocks = findOneBlocks(criticalMachine, j);
+        for(int remove = 0 ; remove < (int)oneBlocks.size() ; remove++) {
+            for(int insert = 0 ; insert < (int)oneBlocks.size() ; insert++) {
+                if (remove == insert)
+                    continue;
+                for(int m = get<0>(oneBlocks[remove]) ; m <= get<1>(oneBlocks[remove]) ; m++) {
+                    job = npmJobAssignement[criticalMachine][m];
+                    if(insert > remove) {
+                        npmJobAssignement[criticalMachine].insert(npmJobAssignement[criticalMachine].begin() + get<0>(oneBlocks[insert]), job);
+                        npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + m);
+                        if(evaluationFunction() < currentBest) {
+                            mI.clear();
+                            return true;
+                        }
+                    
+                        for(int n = get<0>(oneBlocks[insert]) - 1; n < get<1>(oneBlocks[insert]); n++) {
+                            swap(npmJobAssignement[criticalMachine][n], npmJobAssignement[criticalMachine][n + 1]);
+                            if(evaluationFunction() < currentBest) {
+                                mI.clear();
+                                return true;
+                            }
+                        }
+
+                        npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(oneBlocks[insert]));
+                        npmJobAssignement[criticalMachine].insert(npmJobAssignement[criticalMachine].begin() + m, job);
+                    }
+                    else {
+                        npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + m);
+                        npmJobAssignement[criticalMachine].insert(npmJobAssignement[criticalMachine].begin() + get<0>(oneBlocks[insert]), job);
+                        if(evaluationFunction() < currentBest) {
+                            mI.clear();
+                            return true;
+                        }
+
+                        for(int n = get<0>(oneBlocks[insert]); n <= get<1>(oneBlocks[insert]); n++) {
+                            swap(npmJobAssignement[criticalMachine][n], npmJobAssignement[criticalMachine][n + 1]);
+                            if(evaluationFunction() < currentBest) {
+                                mI.clear();
+                                return true;
+                            }
+                        }
+
+                        npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(oneBlocks[insert]) + 1);
+                        npmJobAssignement[criticalMachine].insert(npmJobAssignement[criticalMachine].begin() + m, job);
+                    }
+                }
+            }
+        }
+        evaluationVector[criticalMachine] = beforeSwap1;
+    }
+
+    mI.clear();
     return false;
 }
 
@@ -717,7 +773,7 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 void VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 4) {
+    while (k != 5) {
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
@@ -728,6 +784,9 @@ void VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 break;
             case 3 :
                 k = twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                break;
+            case 4 :
+                k = oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
         }
     }
@@ -758,7 +817,7 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 void VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 4) {
+    while (k != 5) {
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
@@ -769,6 +828,9 @@ void VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 break;
             case 3 :
                 k = twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                break;
+            case 4 :
+                k = oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
         }
     }
@@ -869,6 +931,8 @@ void initialization() {
     toolsRequirements.resize(toolCount);
     npmJobTime.resize(machineCount);
     npmJobAssignement.resize(machineCount);
+    randomTools.resize(ceil(oneBlockPercentage * toolCount));
+    iota(randomTools.begin(), randomTools.end(), 0);
 
     npmCurrentMagazines.resize(machineCount);
     npmToolsNeedDistance.resize(machineCount);
@@ -915,6 +979,12 @@ void termination() {
     for(auto & v : jobSets) {
         v.clear();
     }
+    for(auto & v : bestSolution) {
+        v.clear();
+    }
+    for(auto & v : jobEligibility) {
+        v.clear();
+    }
 
     npmJobAssignement.clear();
     toolsRequirements.clear();
@@ -922,11 +992,14 @@ void termination() {
     npmCurrentMagazines.clear();
     npmToolsNeedDistance.clear();
 
+    jobEligibility.clear();
     npmMagazineCapacity.clear();
     npmSwitchCost.clear();
     npmCurrentToolSwitches.clear();
     npmCurrentMakespan.clear();
     npmCurrentFlowTime.clear();
+    randomTools.clear();
+    bestSolution.clear();
 
     machineCount = 0;
     toolCount = 0;
