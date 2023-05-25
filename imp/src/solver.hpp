@@ -82,7 +82,7 @@ ostream& operator<<(ostream& os, const vector<tuple<T, T>>& vector);
 void initialization();
 void termination();
 
-int runs = 1, objective, maxIterations = 1000, flowtimeSum, flowtimeAux, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
+int runs = 1, objective, maxIterations = 1000, flowtimeSum, flowtimeAux, iterations, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
 int machineCount, toolCount, jobCount, currentBest, best, beforeSwap1, beforeSwap2, maxTime = 3600;
 float disturbSize = 0.05, oneBlockPercentage = 0.25;
 duration<double> time_span;
@@ -94,7 +94,7 @@ vector<int> npmMagazineCapacity, npmSwitchCost, npmCurrentToolSwitches, npmCurre
 vector<set<int>> jobSets, magazines;
 set<tuple<int, int>> dist;
 vector<vector<int>> toolsDistancesGPCA, jobEligibility;
-vector<tuple<int,int>> oneBlocks;
+vector<tuple<int,int>> oneBlocks, improvements;
 high_resolution_clock::time_point t1, t2;
 
 int flowtimeEvaluation() {
@@ -752,7 +752,6 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     VNDFull(evaluationFunction, evaluationVector);
     updateBestSolution(evaluationFunction);
 
-    int iterations = 0;
     while(iterations++ < maxIterations) {
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
@@ -762,7 +761,11 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         evaluationFunction();
         VNDFull(evaluationFunction, evaluationVector);
 
-        if (evaluationFunction() <= best)
+        int neighborhoodBest = evaluationFunction();
+        if(neighborhoodBest < best)
+            improvements.push_back(make_tuple(iterations, neighborhoodBest));
+
+        if (neighborhoodBest <= best)
             updateBestSolution(evaluationFunction);
             
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
@@ -773,19 +776,22 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 void VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 5) {
+    while (k != 6) {
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
                 k = jobExchangeLocalSearchFull(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
-            case 2 : 
+            case 2 :
+                k = jobInsertionLocalSearchFull(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                break;
+            case 3 : 
                 k = swapLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
-            case 3 :
+            case 4 :
                 k = twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
-            case 4 :
+            case 5 :
                 k = oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
         }
@@ -797,7 +803,6 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     VNDCrit(evaluationFunction, evaluationVector);
     updateBestSolution(evaluationFunction);
 
-    int iterations = 0;
     while(iterations++ < maxIterations) {
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
@@ -806,7 +811,12 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         mI.clear();
         evaluationFunction();
         VNDCrit(evaluationFunction, evaluationVector);
-        if (evaluationFunction() <= best)
+
+        int neighborhoodBest = evaluationFunction();
+        if(neighborhoodBest < best)
+            improvements.push_back(make_tuple(iterations, neighborhoodBest));
+
+        if (neighborhoodBest <= best)
             updateBestSolution(evaluationFunction);
 
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
@@ -817,19 +827,22 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 void VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 5) {
+    while (k != 6) {
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
                 k = jobExchangeLocalSearchCrit(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
-            case 2 : 
+            case 2 :
+                k = jobInsertionLocalSearchCrit(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                break;
+            case 3 : 
                 k = swapLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
-            case 3 :
+            case 4 :
                 k = twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
-            case 4 :
+            case 5 :
                 k = oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
                 break;
         }
@@ -958,6 +971,7 @@ void initialization() {
     magazines.resize(2);
 
     best = INT_MAX;
+    iterations = 0;
 }
 
 void termination() {
@@ -991,6 +1005,7 @@ void termination() {
     npmJobTime.clear();
     npmCurrentMagazines.clear();
     npmToolsNeedDistance.clear();
+    improvements.clear();
 
     jobEligibility.clear();
     npmMagazineCapacity.clear();
@@ -1029,11 +1044,13 @@ int printSolution(string inputFileName, double runningTime, int objective, int r
         s << "MAKESPAN : " << npmCurrentMakespan[i] << "\n\n";
     }
 
-    s << "# -------------------------- #" << "\n\n";
+    s << "# -------------------------- #" << endl << endl;
     s << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
     s << "--- HIGHEST MAKESPAN : " << makespan << endl;
     s << "--- TOTAL FLOWTIME : " << flowtime << endl;
-    s << "--- RUNNING TIME : " << runningTime << "\n\n";
+    s << "--- COMPLETED ITERATIONS : " << --iterations << endl;
+    s << "--- RUNNING TIME : " << runningTime << endl;
+    s << "--- IMPROVEMENT HISTORY : " << improvements << endl;
     s << "# -------------------------- #\n";
 
     return best;
