@@ -1,4 +1,5 @@
-#include "solver.hpp"
+#include "global_vars.hpp"
+#include "io.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -25,32 +26,4 @@ int main(int argc, char* argv[])
     cout << endl << endl << "avg : " << (double)sum / (double)avg << endl;
     if(outputFile.is_open())
         outputFile << endl << endl << "avg : " << (double)sum / (double)avg << endl;
-}
-
-void parseArguments(vector<string> arguments) {
-    for(int i = 0 ; i < (int)arguments.size() ; i++) {
-        if (arguments[i]=="--objective")
-            objective = stoi(arguments[i + 1]);
-        else if (arguments[i]=="--runs")
-            runs = stoi(arguments[i + 1]);
-        else if (arguments[i]=="--iterations")
-            maxIterations = stoi(arguments[i + 1]);
-        else if (arguments[i]=="--instance")
-            instance = (arguments[i + 1]);
-        else if (arguments[i]=="--input") {
-            inputFileName = arguments[i + 1];
-            fpIndex.open(arguments[i + 1]);
-            if(!fpIndex.is_open())
-                throw invalid_argument("ERROR : Input file doesn't exist");
-        }
-        else if (arguments[i]=="--output") {
-            if(fileExists(arguments[i + 1])) {
-                cout << "Output file \"" << arguments[i + 1] << "\" already exists. Overwrite? ";
-                cin >> ans;
-                if(ans == "n" || ans == "no") 
-                    exit(0);
-            }
-            outputFile.open(arguments[i + 1]);
-        }
-    }
 }
