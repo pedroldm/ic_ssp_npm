@@ -192,6 +192,7 @@ void printSummary(Summary summary, string input) {
     cout << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
     cout << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
     cout << "Mean Execution Time : " << fixed << setprecision(2) << summary.getMeanExecutionTime() << endl;
+    cout << "Trajectory : " << summary.getTrajectoryData() << endl;
     if(outputFile.is_open()) {
         outputFile << "--------- SUMMARY ---------" << endl << endl;
         outputFile << "Input: " << input << endl;
@@ -202,7 +203,7 @@ void printSummary(Summary summary, string input) {
         outputFile << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
         outputFile << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
         outputFile << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
-        outputFile << "Mean Execution Time : " << fixed << setprecision(2) << summary.getMeanExecutionTime() << endl;
+        outputFile << "Trajectory : " << summary.getTrajectoryData() << endl;
     }
 }
 

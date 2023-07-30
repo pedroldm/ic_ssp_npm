@@ -161,7 +161,7 @@ class Summary {
             sum += results[i]->getBestResult(objective);
         }
 
-        return (double)sum / (double)results.size() ;
+        return (double)sum / (double)results.size();
     }
 
     double getMeanStandardDeviation(int objective) {
@@ -170,7 +170,7 @@ class Summary {
             sum += results[i]->getStandardDeviation(objective);
         }
 
-        return (double)sum / (double)results.size() ;
+        return (double)sum / (double)results.size();
     }
 
     double getMeanExecutionTime() {
@@ -179,7 +179,33 @@ class Summary {
             sum += results[i]->getMeanExecutionTime();
         }
 
-        return (double)sum / (double)results.size() ;
+        return (double)sum / (double)results.size();
+    }
+
+    vector<int> getTrajectoryData() {
+        vector<int> trajectory(iterations, 0);
+
+        for(int i = 0 ; i < results.size() ; i++) {
+            for(int j = 0 ; j < results[i]->solutions.size() ; j++) {
+                for(int k = 0 ; k < results[i]->solutions[j].improvements.size(); k++) {
+                    if (!trajectory[get<0>(results[i]->solutions[j].improvements[k])]) {
+                        trajectory[get<0>(results[i]->solutions[j].improvements[k])] = get<1>(results[i]->solutions[j].improvements[k]);
+                    }
+                    else {
+                        trajectory[get<0>(results[i]->solutions[j].improvements[k])] = (get<1>(results[i]->solutions[j].improvements[k]) + trajectory[get<0>(results[i]->solutions[j].improvements[k])]) / 2;
+                    }
+                }
+            }
+        }
+
+        for (int i = 1 ; i < trajectory.size() ; i++) {
+            if (!trajectory[i])
+                trajectory[i] = trajectory[i - 1];
+            if (trajectory[i - 1] < trajectory[i])
+                trajectory[i] = trajectory[i - 1];
+        }
+
+        return trajectory;
     }
 };
 
