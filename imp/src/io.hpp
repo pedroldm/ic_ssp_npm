@@ -7,12 +7,13 @@
 #include "metaheuristics.hpp"
 
 /* I/O */
-int singleRun(string inputFileName, ofstream& outputFile, int run, int objective);
+Instance singleRun(string inputFileName, ofstream& outputFile, int run, int objective);
 void readProblem(string fileName);
 void parseArguments(vector<string> arguments);
 bool fileExists(const std::string& filename);
 template <typename S>
-int printSolution(string inputFileName, double runningTime, int objective, int run, S &s);
+void printSolution(string inputFileName, double runningTime, int objective, int run, S &s);
+void printSummary(Summary summary, string input);
 template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& v);
 template<typename T>

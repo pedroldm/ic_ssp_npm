@@ -5,7 +5,9 @@
 
 void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     constructInitialSolution();
+    improvements.push_back(make_tuple(0, evaluationFunction()));
     VNDFull(evaluationFunction, evaluationVector);
+    improvements.push_back(make_tuple(1, evaluationFunction()));
     updateBestSolution(evaluationFunction);
 
     while(iterations++ < maxIterations) {
@@ -32,7 +34,9 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     constructInitialSolution();
+    improvements.push_back(make_tuple(0, evaluationFunction()));
     VNDCrit(evaluationFunction, evaluationVector);
+    improvements.push_back(make_tuple(1, evaluationFunction()));
     updateBestSolution(evaluationFunction);
 
     while(iterations++ < maxIterations) {

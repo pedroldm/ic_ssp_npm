@@ -1,6 +1,6 @@
 #include "io.hpp"
 
-int singleRun(string inputFileName, ofstream& outputFile, int run, int objective) {
+Instance singleRun(string inputFileName, ofstream& outputFile, int run, int objective) {
     double runningTime;
     readProblem(inputFileName);
     checkMachinesEligibility();
@@ -26,23 +26,15 @@ int singleRun(string inputFileName, ofstream& outputFile, int run, int objective
 	printSolution(inputFileName, runningTime, objective, run, cout);		
 	printSolution(inputFileName, runningTime, objective, run, outputFile);		
 
-    switch(objective) {
-        case 1 : 
-            return GPCA();
-        case 2 :
-            return makespanEvaluation();
-        case 3 :
-            return flowtimeEvaluation();
-        default :
-            throw invalid_argument("ERROR : Objective not well informed");
-    }												
+    Instance ins(bestSolution, GPCA(), makespanEvaluation(), flowtimeEvaluation(), improvements, runningTime);
+    return ins;
 }
 
 void readProblem(string fileName) {
     int aux;
 	ifstream fpIn(fileName);
     if(!fpIn)
-        throw invalid_argument("ERROR : Instance " + fileName + "doesn't exist");
+        throw invalid_argument("ERROR : Instance " + fileName + " doesn't exist");
 
     fpIn >> machineCount >> jobCount >> toolCount;
 
@@ -158,7 +150,7 @@ void termination() {
 }
 
 template <typename S>
-int printSolution(string inputFileName, double runningTime, int objective, int run, S &s) {
+void printSolution(string inputFileName, double runningTime, int objective, int run, S &s) {
     int totalToolSwitches = GPCA(), makespan = makespanEvaluation(), flowtime = flowtimeEvaluation();
 
     s << "RUN : " << run << " - " << inputFileName << "\n\n";
@@ -187,15 +179,40 @@ int printSolution(string inputFileName, double runningTime, int objective, int r
     s << "--- COMPLETED ITERATIONS : " << --iterations << endl;
     s << "--- RUNNING TIME : " << runningTime << endl;
     s << "--- IMPROVEMENT HISTORY : " << improvements << endl;
-    s << "# -------------------------- #\n";
+}
 
-    return best;
+void printSummary(Summary summary, string input) {
+    cout << "--------- SUMMARY ---------" << endl << endl;
+    cout << "Input: " << input << endl;
+    cout << "Objective: " << objective << endl;
+    cout << "Average TS: " << (int)round(summary.getGeneralMean(1)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(1) << ")" << endl;
+    cout << "Average Makespan: " << (int)round(summary.getGeneralMean(2)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(2) << ")" << endl;
+    cout << "Average Flowtime: " << (int)round(summary.getGeneralMean(3)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(3) << ")" << endl;
+    cout << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
+    cout << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
+    cout << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
+    cout << "Mean Execution Time : " << fixed << setprecision(2) << summary.getMeanExecutionTime() << endl;
+    if(outputFile.is_open()) {
+        outputFile << "--------- SUMMARY ---------" << endl << endl;
+        outputFile << "Input: " << input << endl;
+        outputFile << "Objective: " << objective << endl;
+        outputFile << "Average TS: " << (int)round(summary.getGeneralMean(1)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(1) << ")" << endl;
+        outputFile << "Average Makespan: " << (int)round(summary.getGeneralMean(2)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(2) << ")" << endl;
+        outputFile << "Average Flowtime: " << (int)round(summary.getGeneralMean(3)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(3) << ")" << endl;
+        outputFile << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
+        outputFile << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
+        outputFile << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
+        outputFile << "Mean Execution Time : " << fixed << setprecision(2) << summary.getMeanExecutionTime() << endl;
+    }
 }
 
 void parseArguments(vector<string> arguments) {
     for(int i = 0 ; i < (int)arguments.size() ; i++) {
-        if (arguments[i]=="--objective")
+        if (arguments[i]=="--objective") {
             objective = stoi(arguments[i + 1]);
+            if (objective < 1 || objective > 3)
+                throw invalid_argument("ERROR : Objective not well informed. Must be 1 (TS), 2 (makespan) or 3 (flowtime)");
+        }
         else if (arguments[i]=="--runs")
             runs = stoi(arguments[i + 1]);
         else if (arguments[i]=="--iterations")
