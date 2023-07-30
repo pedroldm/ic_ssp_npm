@@ -4,7 +4,6 @@
 int main(int argc, char* argv[])
 {
     vector<string> arguments(argv + 1, argv + argc);
-    Summary summary;
 
     srand(time(NULL));
     parseArguments(arguments);
@@ -28,5 +27,5 @@ int main(int argc, char* argv[])
     else
         throw invalid_argument("ERROR : Input file not well informed");
 
-    printSummary(summary, fpIndex.is_open() ? inputFileName : instance);
+    printSummary(fpIndex.is_open() ? inputFileName : instance);
 }

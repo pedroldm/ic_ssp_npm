@@ -26,7 +26,7 @@ Instance singleRun(string inputFileName, ofstream& outputFile, int run, int obje
 	printSolution(inputFileName, runningTime, objective, run, cout);		
 	printSolution(inputFileName, runningTime, objective, run, outputFile);		
 
-    Instance ins(bestSolution, GPCA(), makespanEvaluation(), flowtimeEvaluation(), improvements, runningTime);
+    Instance ins(bestSolution, GPCA(), makespanEvaluation(), flowtimeEvaluation(), improvements, runningTime, iterations);
     return ins;
 }
 
@@ -181,7 +181,7 @@ void printSolution(string inputFileName, double runningTime, int objective, int 
     s << "--- IMPROVEMENT HISTORY : " << improvements << endl;
 }
 
-void printSummary(Summary summary, string input) {
+void printSummary(string input) {
     cout << "--------- SUMMARY ---------" << endl << endl;
     cout << "Input: " << input << endl;
     cout << "Objective: " << objective << endl;
@@ -192,7 +192,8 @@ void printSummary(Summary summary, string input) {
     cout << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
     cout << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
     cout << "Mean Execution Time : " << fixed << setprecision(2) << summary.getMeanExecutionTime() << endl;
-    cout << "Trajectory : " << summary.getTrajectoryData() << endl;
+    cout << "Trajectory : " << summary.getTrajectoryData();
+    cout << "LS Improvements : " << summary.localSearchImprovements;
     if(outputFile.is_open()) {
         outputFile << "--------- SUMMARY ---------" << endl << endl;
         outputFile << "Input: " << input << endl;
@@ -203,7 +204,8 @@ void printSummary(Summary summary, string input) {
         outputFile << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
         outputFile << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
         outputFile << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
-        outputFile << "Trajectory : " << summary.getTrajectoryData() << endl;
+        outputFile << "Trajectory : " << summary.getTrajectoryData();
+        outputFile << "LS Improvements : " << summary.localSearchImprovements;
     }
 }
 

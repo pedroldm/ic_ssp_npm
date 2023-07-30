@@ -6,19 +6,44 @@ void VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
-                k = jobExchangeLocalSearchFull(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(jobExchangeLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[0]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
             case 2 :
-                k = jobInsertionLocalSearchFull(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(jobInsertionLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[1]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
             case 3 : 
-                k = swapLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(swapLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[2]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
             case 4 :
-                k = twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
             case 5 :
-                k = oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
         }
     }
@@ -30,19 +55,44 @@ void VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
-                k = jobExchangeLocalSearchCrit(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(jobExchangeLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[0]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
             case 2 :
-                k = jobInsertionLocalSearchCrit(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(jobInsertionLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[1]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
             case 3 : 
-                k = swapLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(swapLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[2]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
             case 4 :
-                k = twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
             case 5 :
-                k = oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest) ? 1 : k + 1;
+                if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
                 break;
         }
     }

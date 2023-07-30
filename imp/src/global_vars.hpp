@@ -31,7 +31,7 @@ inline duration<double> time_span;
 inline string instance, inputFileName, ans;
 inline ifstream fpIndex;
 inline ofstream outputFile;
-inline vector<int> npmMagazineCapacity, npmSwitchCost, npmCurrentToolSwitches, npmCurrentMakespan, npmCurrentFlowTime, mI, randomTools;
+inline vector<int> npmMagazineCapacity, npmSwitchCost, npmCurrentToolSwitches, npmCurrentMakespan, npmCurrentFlowTime, mI, randomTools, localSearchImprovements;
 inline vector<set<int>> jobSets, magazines;
 inline set<tuple<int, int>> dist;
 inline vector<tuple<int,int>> oneBlocks, improvements;
@@ -45,16 +45,18 @@ class Instance {
         int toolSwitches;
         int makespan;
         int flowtime;
+        int completedIterations;
         double runningTime;
         vector<tuple<int,int>> improvements;
 
-        Instance(vector<vector<int>> _assignement, int _toolSwitches, int _makespan, int _flowtime, vector<tuple<int,int>> _improvements, double _runningTime) {
+        Instance(vector<vector<int>> _assignement, int _toolSwitches, int _makespan, int _flowtime, vector<tuple<int,int>> _improvements, double _runningTime, int _completedIterations) {
             assignement = _assignement;
             toolSwitches = _toolSwitches;
             makespan = _makespan;
             flowtime = _flowtime;
             improvements = _improvements;
             runningTime = _runningTime;
+            completedIterations = _completedIterations;
         }
 };
 
@@ -147,11 +149,25 @@ class Results {
         
         return sum / (double)solutions.size();
     }
+
+    double getMeanCompletedIterations() {
+        double sum = 0;
+        for (int i = 0 ; i < solutions.size() ; i++) {
+            sum += solutions[i].completedIterations;
+        }
+        
+        return sum / (double)solutions.size();
+    }
 };
 
 class Summary {
     public:
         vector<Results*> results;
+        vector<long> localSearchImprovements;
+    
+    Summary() {
+        localSearchImprovements = {0, 0, 0, 0, 0};
+    }
 
     void addResults(Results* r) { results.push_back(r); }
 
@@ -182,8 +198,18 @@ class Summary {
         return (double)sum / (double)results.size();
     }
 
-    vector<int> getTrajectoryData() {
+    double getMeanCompletedIterations() {
+        long sum = 0;
+        for (int i = 0 ; i < results.size() ; i++) {
+            sum += results[i]->getMeanCompletedIterations();
+        }
+
+        return (double)sum / (double)results.size();
+    }
+
+    vector<tuple<int,int>> getTrajectoryData() {
         vector<int> trajectory(iterations, 0);
+        vector<tuple<int,int>> dots;
 
         for(int i = 0 ; i < results.size() ; i++) {
             for(int j = 0 ; j < results[i]->solutions.size() ; j++) {
@@ -198,15 +224,24 @@ class Summary {
             }
         }
 
-        for (int i = 1 ; i < trajectory.size() ; i++) {
+        for(int i = 1 ; i < trajectory.size() ; i++) {
             if (!trajectory[i])
                 trajectory[i] = trajectory[i - 1];
             if (trajectory[i - 1] < trajectory[i])
                 trajectory[i] = trajectory[i - 1];
         }
 
-        return trajectory;
+        dots.push_back(make_tuple(0, trajectory[0]));
+        for(int i = 1 ; i < trajectory.size() ; i++) {
+            if (trajectory[i] != trajectory[i - 1])
+                dots.push_back(make_tuple(i, trajectory[i]));
+        }
+        dots.push_back(make_tuple((int)getMeanCompletedIterations(), get<1>(dots[dots.size() - 1])));
+
+        return dots;
     }
 };
+
+inline Summary summary;
 
 #endif

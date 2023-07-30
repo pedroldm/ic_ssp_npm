@@ -13,7 +13,7 @@ void parseArguments(vector<string> arguments);
 bool fileExists(const std::string& filename);
 template <typename S>
 void printSolution(string inputFileName, double runningTime, int objective, int run, S &s);
-void printSummary(Summary summary, string input);
+void printSummary(string input);
 template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& v);
 template<typename T>
