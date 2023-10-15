@@ -26,7 +26,7 @@ Instance singleRun(string inputFileName, ofstream& outputFile, int run, int obje
 	printSolution(inputFileName, runningTime, objective, run, cout);		
 	printSolution(inputFileName, runningTime, objective, run, outputFile);		
 
-    Instance ins(bestSolution, GPCA(), makespanEvaluation(), flowtimeEvaluation(), improvements, runningTime, iterations);
+    Instance ins(bestSolution, GPCA(), makespanEvaluation(), flowtimeEvaluation(), improvements, runningTime, iterations, timeTracking);
     return ins;
 }
 
@@ -67,6 +67,25 @@ void readProblem(string fileName) {
     }
 }
 
+void registerTimeTracking() {
+    time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
+        if(time_span.count() >= 300 && timeTracking[1] == INT_MAX) {
+            timeTracking[1] = best;
+        }
+        else if(time_span.count() >= 900 && timeTracking[2] == INT_MAX) {
+            timeTracking[2] = best;
+        }
+        else if(time_span.count() >= 1800 && timeTracking[3] == INT_MAX) {
+            timeTracking[3] = best;
+        }
+        else if(time_span.count() >= 2700 && timeTracking[4] == INT_MAX) {
+            timeTracking[4] = best;
+        }
+        else if(time_span.count() >= 3600 && timeTracking[5] == INT_MAX) {
+            timeTracking[5] = best;
+        }
+}
+
 void initialization() {
     toolsRequirements.resize(toolCount);
     npmJobTime.resize(machineCount);
@@ -77,6 +96,7 @@ void initialization() {
     for(int i = 0 ; i < jobCount ; i++) {
         similarityMatrix[i].resize(jobCount);
     }
+    timeTracking = {INT_MAX, INT_MAX, INT_MAX, INT_MAX, INT_MAX, INT_MAX};
 
     npmCurrentMagazines.resize(machineCount);
     npmToolsNeedDistance.resize(machineCount);
@@ -185,7 +205,8 @@ void printSolution(string inputFileName, double runningTime, int objective, int 
     s << "--- TOTAL FLOWTIME : " << flowtime << endl;
     s << "--- COMPLETED ITERATIONS : " << --iterations << endl;
     s << "--- RUNNING TIME : " << runningTime << endl;
-    s << "--- IMPROVEMENT HISTORY : " << improvements << endl;
+    s << "--- IMPROVEMENT HISTORY : " << improvements;
+    s << "--- TIME TRACKING : " << timeTracking << endl;
 }
 
 void printSummary(string input) {

@@ -26,6 +26,6 @@ ostream& operator<<(ostream& os, const vector<tuple<T, T>>& vector);
 /* Initializes and terminates all data structures */
 void initialization();
 void termination();
-void constructSimilarityMatrix();
+void registerTimeTracking();
 
 #endif

@@ -2,23 +2,26 @@
 #include "constructive_heuristics.hpp"
 #include "local_search.hpp"
 #include "evaluation.hpp"
+#include "io.hpp"
 
 void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     constructSimilarityMatrix();
     constructInitialSolution();
     improvements.push_back(make_tuple(0, evaluationFunction()));
-    VNDFull(evaluationFunction, evaluationVector);
-    improvements.push_back(make_tuple(1, evaluationFunction()));
+    bool stillHaveTime = VNDFull(evaluationFunction, evaluationVector);
+    int it = evaluationFunction();
+    timeTracking[0] = it;
+    improvements.push_back(make_tuple(1, it));
     updateBestSolution(evaluationFunction);
 
-    while(iterations++ < maxIterations) {
+    while(iterations++ < maxIterations && stillHaveTime) {
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
             jobInsertionDisturb();
         }
         mI.clear();
         evaluationFunction();
-        VNDFull(evaluationFunction, evaluationVector);
+        stillHaveTime = VNDFull(evaluationFunction, evaluationVector);
 
         int neighborhoodBest = evaluationFunction();
         if(neighborhoodBest < best)
@@ -26,10 +29,8 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
         if (neighborhoodBest <= best)
             updateBestSolution(evaluationFunction);
-            
-        time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
-        if(time_span.count() >= maxTime)
-            break;
+
+        registerTimeTracking();
     }
 }
 
@@ -38,11 +39,13 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     constructInitialSolution();
     improvements.push_back(make_tuple(0, evaluationFunction()));
     VNDCrit(evaluationFunction, evaluationVector);
-    improvements.push_back(make_tuple(1, evaluationFunction()));
+    int it = evaluationFunction();
+    timeTracking[0] = it;
+    improvements.push_back(make_tuple(1, it));
     updateBestSolution(evaluationFunction);
     bool stillHaveTime = true;
 
-    while(iterations++ < maxIterations) {
+    while(iterations++ < maxIterations && stillHaveTime) {
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
             jobInsertionDisturb();
@@ -59,6 +62,8 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
         if (neighborhoodBest <= best)
             updateBestSolution(evaluationFunction);
+
+        registerTimeTracking();
     }
 }
 

@@ -31,7 +31,7 @@ inline duration<double> time_span;
 inline string instance, inputFileName, ans;
 inline ifstream fpIndex;
 inline ofstream outputFile;
-inline vector<int> npmMagazineCapacity, npmSwitchCost, npmCurrentToolSwitches, npmCurrentMakespan, npmCurrentFlowTime, mI, randomTools, localSearchImprovements;
+inline vector<int> npmMagazineCapacity, npmSwitchCost, npmCurrentToolSwitches, npmCurrentMakespan, npmCurrentFlowTime, mI, randomTools, localSearchImprovements, timeTracking;
 inline vector<set<int>> jobSets, magazines;
 inline set<tuple<int, int>> dist;
 inline vector<tuple<int,int>> oneBlocks, improvements;
@@ -48,9 +48,10 @@ class Instance {
         int flowtime;
         int completedIterations;
         double runningTime;
+        vector<int> timeTracking;
         vector<tuple<int,int>> improvements;
 
-        Instance(vector<vector<int>> _assignement, int _toolSwitches, int _makespan, int _flowtime, vector<tuple<int,int>> _improvements, double _runningTime, int _completedIterations) {
+        Instance(vector<vector<int>> _assignement, int _toolSwitches, int _makespan, int _flowtime, vector<tuple<int,int>> _improvements, double _runningTime, int _completedIterations, vector<int> _timeTracking) {
             assignement = _assignement;
             toolSwitches = _toolSwitches;
             makespan = _makespan;
@@ -58,6 +59,7 @@ class Instance {
             improvements = _improvements;
             runningTime = _runningTime;
             completedIterations = _completedIterations;
+            timeTracking = _timeTracking;
         }
 };
 
