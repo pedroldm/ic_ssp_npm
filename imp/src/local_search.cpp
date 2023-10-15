@@ -6,6 +6,7 @@ bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
+        currentBest = evaluationFunction();
         switch(k) {
             case 1 :
                 if(jobExchangeLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
