@@ -3,8 +3,8 @@
 
 #include "global_vars.hpp"
 
-void VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
-void VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 
 /* Local search methods */
 /* 0 */ bool jobInsertionLocalSearchCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);

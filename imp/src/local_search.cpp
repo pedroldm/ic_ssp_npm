@@ -1,9 +1,11 @@
 #include "local_search.hpp"
 
-void VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
     while (k != 6) {
-        currentBest = evaluationFunction();
+        time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
+        if(time_span.count() >= maxTime)
+            return false;
         switch(k) {
             case 1 :
                 if(jobExchangeLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
@@ -47,11 +49,15 @@ void VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 break;
         }
     }
+    return true;
 }
 
-void VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
     while (k != 6) {
+        time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
+        if(time_span.count() >= maxTime)
+            return false;
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
@@ -96,6 +102,7 @@ void VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 break;
         }
     }
+    return true;
 }
 
 bool jobInsertionLocalSearchFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {

@@ -38,6 +38,7 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     VNDCrit(evaluationFunction, evaluationVector);
     improvements.push_back(make_tuple(1, evaluationFunction()));
     updateBestSolution(evaluationFunction);
+    bool stillHaveTime = true;
 
     while(iterations++ < maxIterations) {
         npmJobAssignement = bestSolution;
@@ -46,7 +47,9 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         }
         mI.clear();
         evaluationFunction();
-        VNDCrit(evaluationFunction, evaluationVector);
+        stillHaveTime = VNDCrit(evaluationFunction, evaluationVector);
+        if(!stillHaveTime)
+            break;
 
         int neighborhoodBest = evaluationFunction();
         if(neighborhoodBest < best)
@@ -54,10 +57,6 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
         if (neighborhoodBest <= best)
             updateBestSolution(evaluationFunction);
-
-        time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
-        if(time_span.count() >= maxTime)
-            break;
     }
 }
 
