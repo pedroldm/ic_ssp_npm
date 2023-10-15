@@ -26,7 +26,7 @@ using namespace std::chrono;
 
 inline int runs = 1, objective, maxIterations = 1000, flowtimeSum, flowtimeAux, iterations, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
 inline int machineCount, toolCount, jobCount, currentBest, best, beforeSwap1, beforeSwap2, maxTime = 3600;
-inline float disturbSize = 0.05, oneBlockPercentage = 0.25;
+inline float disturbSize = 0.05, oneBlockPercentage = 0.25, similarityPercentage = 0.70;
 inline duration<double> time_span;
 inline string instance, inputFileName, ans;
 inline ifstream fpIndex;
@@ -37,6 +37,7 @@ inline set<tuple<int, int>> dist;
 inline vector<tuple<int,int>> oneBlocks, improvements;
 inline vector<vector<int>> npmJobAssignement, bestSolution, toolsRequirements, npmJobTime, npmCurrentMagazines, npmToolsNeedDistance;
 inline vector<vector<int>> toolsDistancesGPCA, jobEligibility;
+inline vector<vector<bool>> similarityMatrix;
 inline high_resolution_clock::time_point t1, t2;
 
 class Instance {
@@ -171,7 +172,7 @@ class Summary {
 
     void addResults(Results* r) { results.push_back(r); }
 
-    double getGeneralMean(int objective) {
+    double getBestsMean(int objective) {
         long sum = 0;
         for (int i = 0 ; i < results.size() ; i++) {
             sum += results[i]->getBestResult(objective);
@@ -196,6 +197,15 @@ class Summary {
         }
 
         return (double)sum / (double)results.size();
+    }
+
+    double getGeneralMean(int objective) {
+        double r = 0.0;
+        for (int i = 0 ; i < results.size() ; i++) {
+            r += results[i]->getMean(objective);
+        }
+
+        return r / (double)results.size();
     }
 
     double getMeanCompletedIterations() {

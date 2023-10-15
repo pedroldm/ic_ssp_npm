@@ -246,7 +246,7 @@ bool twoOptLocalSearch(function<int(void)> evaluationFunction, vector<int> &eval
     for(int i = 0 ; i < machineCount ; i++) {
         mI = {i};
         for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
-            for (int k = j + 1 ; k < (int)npmJobAssignement[i].size() ; k++) {
+            for (int k = j + 3 ; k < (int)npmJobAssignement[i].size() ; k++) {
                 beforeSwap1 = evaluationVector[i];
                 reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
                 if(evaluationFunction() < currentBest) {

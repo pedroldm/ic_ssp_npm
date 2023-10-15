@@ -8,5 +8,6 @@ void constructInitialSolution();
 int minTSJ();
 int calcJobDifferences(int j1, int j2);
 int mostSimilarJob(vector<int> &rj, int machineIndex);
+void constructSimilarityMatrix();
 
 #endif

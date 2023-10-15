@@ -59,3 +59,10 @@ void constructInitialSolution() {
         npmJobAssignement[machineToReceive].push_back(msJob);
     }
 }
+
+void constructSimilarityMatrix() {
+    for(int i = 0 ; i < jobCount ; i++) {
+        for(int j = 0 ; j < jobCount ; j++) 
+            similarityMatrix[i][j] = ((calcJobDifferences(i, j) / (double)toolCount) >= similarityPercentage);
+    }
+}

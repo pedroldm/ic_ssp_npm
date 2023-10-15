@@ -65,7 +65,6 @@ void readProblem(string fileName) {
                 jobSets[j].insert(i);
         }
     }
-
 }
 
 void initialization() {
@@ -74,6 +73,10 @@ void initialization() {
     npmJobAssignement.resize(machineCount);
     randomTools.resize(ceil(oneBlockPercentage * toolCount));
     iota(randomTools.begin(), randomTools.end(), 0);
+    similarityMatrix.resize(jobCount);
+    for(int i = 0 ; i < jobCount ; i++) {
+        similarityMatrix[i].resize(jobCount);
+    }
 
     npmCurrentMagazines.resize(machineCount);
     npmToolsNeedDistance.resize(machineCount);
@@ -127,7 +130,11 @@ void termination() {
     for(auto & v : jobEligibility) {
         v.clear();
     }
+    for(auto & v : similarityMatrix) {
+        v.clear();
+    }
 
+    similarityMatrix.clear();
     npmJobAssignement.clear();
     toolsRequirements.clear();
     npmJobTime.clear();
@@ -182,15 +189,20 @@ void printSolution(string inputFileName, double runningTime, int objective, int 
 }
 
 void printSummary(string input) {
-    cout << "--------- SUMMARY ---------" << endl << endl;
     cout << "Input: " << input << endl;
     cout << "Objective: " << objective << endl;
-    cout << "Average TS: " << (int)round(summary.getGeneralMean(1)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(1) << ")" << endl;
-    cout << "Average Makespan: " << (int)round(summary.getGeneralMean(2)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(2) << ")" << endl;
-    cout << "Average Flowtime: " << (int)round(summary.getGeneralMean(3)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(3) << ")" << endl;
+    cout << "# -------------------------------- #" << endl;
+    cout << "Average Bests TS: " << (int)round(summary.getBestsMean(1)) << " (" << fixed << setprecision(2) << summary.getBestsMean(1) << ")" << endl;
+    cout << "Mean TS: " << (int)round(summary.getGeneralMean(1)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(1) << ")" << endl;
+    cout << "Average Bests Makespan: " << (int)round(summary.getBestsMean(2)) << " (" << fixed << setprecision(2) << summary.getBestsMean(2) << ")" << endl;
+    cout << "Mean Makespan: " << (int)round(summary.getGeneralMean(2)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(2) << ")" << endl;
+    cout << "Average Bests Flowtime: " << (int)round(summary.getBestsMean(3)) << " (" << fixed << setprecision(2) << summary.getBestsMean(3) << ")" << endl;
+    cout << "Mean Flowtime: " << (int)round(summary.getGeneralMean(3)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(3) << ")" << endl;
+    cout << "# -------------------------------- #" << endl;
     cout << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
     cout << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
     cout << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
+    cout << "# -------------------------------- #" << endl;
     cout << "Mean Execution Time : " << fixed << setprecision(2) << summary.getMeanExecutionTime() << endl;
     cout << "Trajectory : " << summary.getTrajectoryData();
     cout << "LS Improvements : " << summary.localSearchImprovements;
@@ -198,9 +210,9 @@ void printSummary(string input) {
         outputFile << "--------- SUMMARY ---------" << endl << endl;
         outputFile << "Input: " << input << endl;
         outputFile << "Objective: " << objective << endl;
-        outputFile << "Average TS: " << (int)round(summary.getGeneralMean(1)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(1) << ")" << endl;
-        outputFile << "Average Makespan: " << (int)round(summary.getGeneralMean(2)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(2) << ")" << endl;
-        outputFile << "Average Flowtime: " << (int)round(summary.getGeneralMean(3)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(3) << ")" << endl;
+        outputFile << "Average TS: " << (int)round(summary.getBestsMean(1)) << " (" << fixed << setprecision(2) << summary.getBestsMean(1) << ")" << endl;
+        outputFile << "Average Makespan: " << (int)round(summary.getBestsMean(2)) << " (" << fixed << setprecision(2) << summary.getBestsMean(2) << ")" << endl;
+        outputFile << "Average Flowtime: " << (int)round(summary.getBestsMean(3)) << " (" << fixed << setprecision(2) << summary.getBestsMean(3) << ")" << endl;
         outputFile << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
         outputFile << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
         outputFile << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;

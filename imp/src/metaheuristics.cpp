@@ -4,6 +4,7 @@
 #include "evaluation.hpp"
 
 void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+    constructSimilarityMatrix();
     constructInitialSolution();
     improvements.push_back(make_tuple(0, evaluationFunction()));
     VNDFull(evaluationFunction, evaluationVector);
@@ -33,6 +34,7 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 }
 
 void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+    constructSimilarityMatrix();
     constructInitialSolution();
     improvements.push_back(make_tuple(0, evaluationFunction()));
     VNDCrit(evaluationFunction, evaluationVector);
