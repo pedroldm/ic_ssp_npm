@@ -21,7 +21,7 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         }
         mI.clear();
         evaluationFunction();
-        stillHaveTime = VNDFull(evaluationFunction, evaluationVector);
+        stillHaveTime = VNDFullSim(evaluationFunction, evaluationVector);
 
         int neighborhoodBest = evaluationFunction();
         if(neighborhoodBest < best)
@@ -52,7 +52,7 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         }
         mI.clear();
         evaluationFunction();
-        stillHaveTime = VNDCrit(evaluationFunction, evaluationVector);
+        stillHaveTime = VNDCritSim(evaluationFunction, evaluationVector);
         if(!stillHaveTime)
             break;
 

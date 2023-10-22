@@ -53,6 +53,59 @@ bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     return true;
 }
 
+bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+    int k = 1;
+    while (k != 6) {
+        time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
+        if(time_span.count() >= maxTime)
+            return false;
+        currentBest = evaluationFunction();
+        switch(k) {
+            case 1 :
+                if(jobExchangeLocalSearchFullSim(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[0]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 2 :
+                if(jobInsertionLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[1]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 3 : 
+                if(swapLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[2]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 4 :
+                if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 5 :
+                if(oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+        }
+    }
+    return true;
+}
+
 bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
     while (k != 6) {
@@ -87,6 +140,59 @@ bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 break;
             case 4 :
                 if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 5 :
+                if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+        }
+    }
+    return true;
+}
+
+bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
+    int k = 1;
+    while (k != 6) {
+        time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
+        if(time_span.count() >= maxTime)
+            return false;
+        currentBest = evaluationFunction();
+        switch(k) {
+            case 1 :
+                if(jobExchangeLocalSearchCritSim(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[0]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 2 :
+                if(jobInsertionLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[1]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 3 : 
+                if(swapLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
+                    summary.localSearchImprovements[2]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 4 :
+                if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
                     summary.localSearchImprovements[3]++;
                     k = 1;
                 }
@@ -213,6 +319,35 @@ bool jobExchangeLocalSearchCrit(function<int(void)> evaluationFunction, vector<i
     return false;
 }
 
+bool jobExchangeLocalSearchCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {
+    int criticalMachine = distance(evaluationVector.begin(),max_element(evaluationVector.begin(), evaluationVector.end()));
+
+    for(int i = 0 ; i < (int)npmJobAssignement[criticalMachine].size() ; i++) {
+        for(int l = 0 ; l < machineCount; l++) {
+            mI = {criticalMachine, l};
+            for (int j = 0 ; j < (int)npmJobAssignement[l].size() ; j++) {
+                if (similarityMatrix[i][j] && jobEligibility[criticalMachine][npmJobAssignement[l][j]] && jobEligibility[l][npmJobAssignement[criticalMachine][i]]) {
+                    beforeSwap1 = evaluationVector[criticalMachine];
+                    beforeSwap2 = evaluationVector[l];
+                    swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[l][j]);
+                    if(evaluationFunction() < currentBest) {
+                        mI.clear();
+                        return true;
+                    }
+                    else {
+                        swap(npmJobAssignement[criticalMachine][i], npmJobAssignement[l][j]);
+                        evaluationVector[criticalMachine] = beforeSwap1;
+                        evaluationVector[l] = beforeSwap2;
+                    }
+                }
+            }
+        }
+    }
+
+    mI.clear();
+    return false;
+}
+
 bool jobExchangeLocalSearchFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {
     for (int l = 0 ; l < machineCount - 1; l++) {
         for (int k = l + 1 ; k < machineCount ; k++) {
@@ -220,6 +355,35 @@ bool jobExchangeLocalSearchFull(function<int(void)> evaluationFunction, vector<i
             for(int i = 0 ; i < (int)npmJobAssignement[l].size() ; i++) {
                 for (int j = 0 ; j < (int)npmJobAssignement[k].size() ; j++) {
                     if (jobEligibility[l][npmJobAssignement[k][j]] && jobEligibility[k][npmJobAssignement[l][i]]) {
+                        beforeSwap1 = evaluationVector[l];
+                        beforeSwap2 = evaluationVector[k];
+                        swap(npmJobAssignement[l][i], npmJobAssignement[k][j]);
+                        if(evaluationFunction() < currentBest) {
+                            mI.clear();
+                            return true;
+                        }
+                        else {
+                            swap(npmJobAssignement[l][i], npmJobAssignement[k][j]);
+                            evaluationVector[l] = beforeSwap1;
+                            evaluationVector[k] = beforeSwap2;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    mI.clear();
+    return false;
+}
+
+bool jobExchangeLocalSearchFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {
+    for (int l = 0 ; l < machineCount - 1; l++) {
+        for (int k = l + 1 ; k < machineCount ; k++) {
+            mI = {l, k};
+            for(int i = 0 ; i < (int)npmJobAssignement[l].size() ; i++) {
+                for (int j = 0 ; j < (int)npmJobAssignement[k].size() ; j++) {
+                    if (similarityMatrix[i][j] && jobEligibility[l][npmJobAssignement[k][j]] && jobEligibility[k][npmJobAssignement[l][i]]) {
                         beforeSwap1 = evaluationVector[l];
                         beforeSwap2 = evaluationVector[k];
                         swap(npmJobAssignement[l][i], npmJobAssignement[k][j]);
@@ -265,10 +429,60 @@ bool twoOptLocalSearch(function<int(void)> evaluationFunction, vector<int> &eval
     return false;
 }
 
+bool twoOptLocalSearchSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {
+    for(int i = 0 ; i < machineCount ; i++) {
+        mI = {i};
+        for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
+            for (int k = j + 3 ; k < (int)npmJobAssignement[i].size() ; k++) {
+                if(!similarityMatrix[j][k])
+                    continue;
+                beforeSwap1 = evaluationVector[i];
+                reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
+                if(evaluationFunction() < currentBest) {
+                    mI.clear();
+                    return true;
+                }
+                else {
+                    reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
+                    evaluationVector[i] = beforeSwap1;
+                }
+            }
+        }
+    }
+
+    mI.clear();
+    return false;
+}
+
 bool swapLocalSearch(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {
     for(int i = 0 ; i < machineCount ; i++) {
         for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
             for (int k = j + 1 ; k < (int)npmJobAssignement[i].size() ; k++) {
+                beforeSwap1 = evaluationVector[i];
+                swap(npmJobAssignement[i][j], npmJobAssignement[i][k]);
+                mI = {i};
+                if(evaluationFunction() < currentBest) {
+                    mI.clear();
+                    return true;
+                }
+                else {
+                    swap(npmJobAssignement[i][j], npmJobAssignement[i][k]);
+                    evaluationVector[i] = beforeSwap1;
+                }
+            }
+        }
+    }
+
+    mI.clear();
+    return false;
+}
+
+bool swapLocalSearchSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {
+    for(int i = 0 ; i < machineCount ; i++) {
+        for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
+            for (int k = j + 1 ; k < (int)npmJobAssignement[i].size() ; k++) {
+                if(!similarityMatrix[j][k])
+                    continue;
                 beforeSwap1 = evaluationVector[i];
                 swap(npmJobAssignement[i][j], npmJobAssignement[i][k]);
                 mI = {i};

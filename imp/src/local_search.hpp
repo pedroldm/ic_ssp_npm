@@ -5,6 +5,8 @@
 
 bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
+bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector);
 
 /* Local search methods */
 /* 0 */ bool jobInsertionLocalSearchCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);
@@ -16,5 +18,10 @@ bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 bool oneBlockLocalSearch(function<int(void)> &evaluationFunction, vector<int>& evaluationVector, int currentBest);
 bool oneBlockLocalSearchCrit(function<int(void)> &evaluationFunction, vector<int>& evaluationVector, int currentBest);
 vector<tuple<int,int>> findOneBlocks(int machineIndex, int tool);
+
+bool swapLocalSearchSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);
+bool twoOptLocalSearchSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);
+bool jobExchangeLocalSearchFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);
+bool jobExchangeLocalSearchCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest);
 
 #endif

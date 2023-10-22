@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+# Old outputs
+imp/output/v1.0/*
