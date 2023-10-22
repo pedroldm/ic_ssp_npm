@@ -256,7 +256,7 @@ void parseArguments(vector<string> arguments) {
         else if (arguments[i]=="--instance")
             instance = (arguments[i + 1]);
         else if (arguments[i]=="--similarity_percentage")
-            similarityPercentage = stof(arguments[i + 1])
+            similarityPercentage = stof(arguments[i + 1]);
         else if (arguments[i]=="--input") {
             inputFileName = arguments[i + 1];
             fpIndex.open(arguments[i + 1]);
