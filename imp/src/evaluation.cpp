@@ -1,5 +1,43 @@
 #include "evaluation.hpp"
 
+vector<set<tuple<int,int>>> criticJobEvaluation() {
+    vector<set<tuple<int,int>>> cJ(machineCount);
+    for(int machineIndex = 0 ; machineIndex < machineCount ; machineIndex++) {
+        int jobsAssignedCount = (int)npmJobAssignement[machineIndex].size(), empty; /* .size() -> O(1)*/
+        npmCurrentToolSwitches[machineIndex] = 0;
+        if(!npmJobAssignement[machineIndex].size())
+            continue;
+
+        fillToolsDistances(machineIndex, jobsAssignedCount); /* O(tj) */
+        int startSwitch = fillStartMagazine(machineIndex, jobsAssignedCount); /* O(j) */
+
+        for(int i = startSwitch ; i < jobsAssignedCount ; i++) {
+            magazines[1].insert(jobSets[npmJobAssignement[machineIndex][i]].begin(), jobSets[npmJobAssignement[machineIndex][i]].end()); /* O(t) */
+            empty = npmMagazineCapacity[machineIndex] - magazines[1].size();
+            for(auto t : magazines[0]) { /* O(t) */
+                if(!toolsRequirements[t][npmJobAssignement[machineIndex][i]])
+                    dist.insert(make_tuple(toolsDistancesGPCA[t][i], t)); /* O(logt) */
+            }
+            npmCurrentToolSwitches[machineIndex] += dist.size() - empty;
+            cJ[machineIndex].insert(make_tuple(((dist.size() - empty) * npmSwitchCost[machineIndex]) + npmJobTime[machineIndex][npmJobAssignement[machineIndex][i]], i));
+
+            if(empty) {
+                for(auto t : dist) {
+                    magazines[1].insert(get<1>(t)); /* O(logt) */
+                    if(!--empty)
+                        break;
+                }
+            }
+            magazines[0] = magazines[1]; /* O(t) */
+            magazines[1].clear(); /* O(t) */
+            dist.clear(); /* O(t) */
+        }
+        magazines[0].clear(); /* O(t) */
+    }
+
+    return cJ;
+}
+
 int makespanEvaluation() {
     GPCA();
 

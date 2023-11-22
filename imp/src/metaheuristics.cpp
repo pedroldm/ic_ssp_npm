@@ -13,11 +13,17 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     timeTracking[0] = it;
     improvements.push_back(make_tuple(1, it));
     updateBestSolution(evaluationFunction);
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
 
     while(iterations++ < maxIterations && stillHaveTime) {
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
-            jobInsertionDisturb();
+            if (dis(gen) < criticJobPercentage)
+                criticJobDisturb();
+            else
+                jobInsertionDisturb();
         }
         mI.clear();
         evaluationFunction();
@@ -44,11 +50,17 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     improvements.push_back(make_tuple(1, it));
     updateBestSolution(evaluationFunction);
     bool stillHaveTime = true;
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
 
     while(iterations++ < maxIterations && stillHaveTime) {
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
-            jobInsertionDisturb();
+            if (dis(gen) < criticJobPercentage)
+                criticJobDisturb();
+            else
+                jobInsertionDisturb();
         }
         mI.clear();
         evaluationFunction();
@@ -160,6 +172,28 @@ int minTSJ() {
         m.insert(make_tuple(npmCurrentToolSwitches[i]/(int)npmJobAssignement[i].size(), i));
     }
     return get<1>(*m.begin());
+}
+
+void criticJobDisturb() {
+    vector<set<tuple<int,int>>> cJ = criticJobEvaluation();
+    for(int i = 0 ; i < machineCount ; i++) {
+        npmCurrentMakespan[i] = npmCurrentToolSwitches[i] * npmSwitchCost[i];
+        for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
+            npmCurrentMakespan[i] += npmJobTime[i][npmJobAssignement[i][j]];
+        }
+    }
+    mt19937 rng(random_device{}());
+    vector<int> mv(machineCount);
+
+    int criticalMachine = distance(npmCurrentMakespan.begin(),max_element(npmCurrentMakespan.begin(), npmCurrentMakespan.end()));
+    tuple<int, int> jobToRemove = *cJ[criticalMachine].rbegin();
+    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));
+    vector<int> otherMachines;
+    for(int i = 0 ; i < machineCount ; i++)
+        if (i != criticalMachine)
+            otherMachines.push_back(i);
+    shuffle(otherMachines.begin(), otherMachines.end(), rng);
+    npmJobAssignement[otherMachines[0]].push_back(get<1>(jobToRemove));
 }
 
 void updateBestSolution(function<int(void)> evaluationFunction) {

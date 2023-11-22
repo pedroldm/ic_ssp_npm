@@ -12,5 +12,6 @@ int replacedTool(int i);
 void fillToolsDistances(int machineIndex, int jobCount);
 int fillStartMagazine(int machineIndex, int jobsAssignedCount);
 int flowtimeEvaluation();
+vector<set<tuple<int,int>>> criticJobEvaluation();
 
 #endif

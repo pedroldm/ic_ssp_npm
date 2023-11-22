@@ -11,6 +11,7 @@ void jobInsertionDisturb();
 void jobExchangeDisturb();
 void twoOptDisturb();
 void swapDisturb();
+void criticJobDisturb();
 
 void updateBestSolution(function<int(void)> evaluationFunction);
 
