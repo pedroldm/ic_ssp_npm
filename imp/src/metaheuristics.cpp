@@ -187,6 +187,7 @@ void criticJobDisturb() {
 
     int criticalMachine = distance(npmCurrentMakespan.begin(),max_element(npmCurrentMakespan.begin(), npmCurrentMakespan.end()));
     tuple<int, int> jobToRemove = *cJ[criticalMachine].rbegin();
+    int jobToReassign = npmJobAssignement[criticalMachine][get<1>(jobToRemove)];
     npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));
     vector<int> otherMachines;
     for(int i = 0 ; i < machineCount ; i++)
@@ -194,6 +195,7 @@ void criticJobDisturb() {
             otherMachines.push_back(i);
     shuffle(otherMachines.begin(), otherMachines.end(), rng);
     npmJobAssignement[otherMachines[0]].push_back(get<1>(jobToRemove));
+    npmJobAssignement[otherMachines[0]].push_back(jobToReassign);
 }
 
 void updateBestSolution(function<int(void)> evaluationFunction) {
