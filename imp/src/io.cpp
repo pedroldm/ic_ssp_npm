@@ -37,6 +37,7 @@ Instance singleRun(string inputFileName, ofstream& outputFile, int run, int obje
             cout << flowtimeEvaluation();
             break;
     }
+    exit(0);
 
     //Instance ins(bestSolution, GPCA(), makespanEvaluation(), flowtimeEvaluation(), improvements, runningTime, iterations, timeTracking);
     //return ins;
