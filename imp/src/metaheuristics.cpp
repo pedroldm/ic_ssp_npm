@@ -194,7 +194,6 @@ void criticJobDisturb() {
         if (i != criticalMachine)
             otherMachines.push_back(i);
     shuffle(otherMachines.begin(), otherMachines.end(), rng);
-    npmJobAssignement[otherMachines[0]].push_back(get<1>(jobToRemove));
     npmJobAssignement[otherMachines[0]].push_back(jobToReassign);
 }
 
