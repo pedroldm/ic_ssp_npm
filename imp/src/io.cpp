@@ -270,6 +270,10 @@ void parseArguments(vector<string> arguments) {
             similarityPercentage = stof(arguments[i + 1]);
         else if (arguments[i]=="--critic_job_percentage")
             criticJobPercentage = stof(arguments[i + 1]);
+        else if (arguments[i]=="--one_block_percentage")
+            oneBlockPercentage = stof(arguments[i + 1]);
+        else if (arguments[i]=="--disturb_size")
+            disturbSize = stof(arguments[i + 1]);
         else if (arguments[i]=="--enable_ls1")
             enable_ls1 = bool(stoi(arguments[i + 1]));
         else if (arguments[i]=="--enable_ls2")

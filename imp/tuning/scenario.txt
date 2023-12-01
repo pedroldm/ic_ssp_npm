@@ -119,7 +119,7 @@ maxExperiments = 3500
 
 ## Number of calls to targetRunner to execute in parallel. Values 0 or 1 mean
 ## no parallelization.
-parallel = 4
+parallel = 8
 
 ## Enable/disable load-balancing when executing experiments in parallel.
 ## Load-balancing makes better use of computing resources, but increases
