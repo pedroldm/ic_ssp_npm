@@ -80,20 +80,28 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 }
 
 void jobInsertionDisturb() {
-    vector<int> r(machineCount);
-    iota(r.begin(), r.end(), 0);
+    makespanEvaluation();
 
+    int criticalMachine = distance(npmCurrentMakespan.begin(),max_element(npmCurrentMakespan.begin(), npmCurrentMakespan.end()));
+    random_device rd;
+    mt19937 gen(rd());
     mt19937 rng(random_device{}());
-    shuffle(r.begin(), r.end(), rng);
+    vector<int>otherMachines(machineCount);
+    for(int i = 0 ; i < machineCount ; i++)
+        if (i != criticalMachine)
+            otherMachines.push_back(i);
+    shuffle(otherMachines.begin(), otherMachines.end(), rng);
 
-    vector<int> jR(npmJobAssignement[r[0]].size());
-    iota(jR.begin(), jR.end(), 0);
-    shuffle(jR.begin(), jR.end(), rng);
+    uniform_int_distribution<> distribution(0, npmJobAssignement[criticalMachine].size() - 1);
+    int randomIndex = distribution(gen);
+    int jobToReassign = npmJobAssignement[criticalMachine][randomIndex];
+    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + randomIndex);
 
-    for(int i = 0 ; i < (int) jR.size() ; i++) {
-        if(jobEligibility[r[1]][npmJobAssignement[r[0]][jR[i]]]) {
-            npmJobAssignement[r[1]].insert(npmJobAssignement[r[1]].begin() + rand () % (npmJobAssignement[r[1]].size() + 1), npmJobAssignement[r[0]][jR[i]]);
-            npmJobAssignement[r[0]].erase(npmJobAssignement[r[0]].begin() + jR[i]);
+    for(int i = 0 ; i < (int) otherMachines.size() ; i++) {
+        if(jobEligibility[i][jobToReassign]) {
+            uniform_int_distribution<> destDistribution(0, npmJobAssignement[i].size());
+            int destRandomIndex = destDistribution(gen);
+            npmJobAssignement[i].insert(npmJobAssignement[i].begin() + destRandomIndex, jobToReassign);
             return;
         }
     } 
@@ -191,7 +199,7 @@ void criticJobDisturb() {
     npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));
     vector<int> otherMachines;
     for(int i = 0 ; i < machineCount ; i++)
-        if (i != criticalMachine)
+        if (i != criticalMachine && jobEligibility[i][jobToReassign])
             otherMachines.push_back(i);
     shuffle(otherMachines.begin(), otherMachines.end(), rng);
     npmJobAssignement[otherMachines[0]].push_back(jobToReassign);
