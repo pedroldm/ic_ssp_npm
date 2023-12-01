@@ -257,6 +257,18 @@ void parseArguments(vector<string> arguments) {
             instance = (arguments[i + 1]);
         else if (arguments[i]=="--similarity_percentage")
             similarityPercentage = stof(arguments[i + 1]);
+        else if (arguments[i]=="--critic_job_percentage")
+            criticJobPercentage = stof(arguments[i + 1]);
+        else if (arguments[i]=="--enable_ls1")
+            enable_ls1 = bool(stoi(arguments[i + 1]));
+        else if (arguments[i]=="--enable_ls2")
+            enable_ls2 = bool(stoi(arguments[i + 1]));
+        else if (arguments[i]=="--enable_ls3")
+            enable_ls3 = bool(stoi(arguments[i + 1]));
+        else if (arguments[i]=="--enable_ls4")
+            enable_ls4 = bool(stoi(arguments[i + 1]));
+        else if (arguments[i]=="--enable_ls5")
+            enable_ls5 = bool(stoi(arguments[i + 1]));
         else if (arguments[i]=="--input") {
             inputFileName = arguments[i + 1];
             fpIndex.open(arguments[i + 1]);

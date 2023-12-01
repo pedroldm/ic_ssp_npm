@@ -9,45 +9,75 @@ bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
-                if(jobExchangeLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[0]++;
-                    k = 1;
+                if (enable_ls1) {
+                        if(jobExchangeLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
+                            summary.localSearchImprovements[0]++;
+                            k = 1;
+                        }
+                        else
+                            k++;
+                        break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 2 :
-                if(jobInsertionLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[1]++;
-                    k = 1;
+                if (enable_ls2) {
+                    if(jobInsertionLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[1]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 3 : 
-                if(swapLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[2]++;
-                    k = 1;
+                if (enable_ls3) {
+                    if(swapLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[2]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 4 :
-                if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
+                if (enable_ls4) {
+                    if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[3]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 5 :
-                if(oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
+                if (enable_ls5) {
+                    if(oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[3]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
         }
     }
     return true;
@@ -62,45 +92,75 @@ bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
-                if(jobExchangeLocalSearchFullSim(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[0]++;
-                    k = 1;
+                if (enable_ls1) {
+                    if(jobExchangeLocalSearchFullSim(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[0]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 2 :
-                if(jobInsertionLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[1]++;
-                    k = 1;
+                if (enable_ls2) {
+                    if(jobInsertionLocalSearchFull(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[1]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 3 : 
-                if(swapLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[2]++;
-                    k = 1;
+                if (enable_ls3) {
+                    if(swapLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[2]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 4 :
-                if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
+                if (enable_ls4) {
+                    if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[3]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 5 :
-                if(oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
+                if (enable_ls5) {
+                    if(oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[3]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
         }
     }
     return true;
@@ -115,45 +175,75 @@ bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
-                if(jobExchangeLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[0]++;
-                    k = 1;
-                }
-                else
+                if (enable_ls1) {
+                    if(jobExchangeLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[0]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
+                }                
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 2 :
-                if(jobInsertionLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[1]++;
-                    k = 1;
+                if (enable_ls2) {
+                    if(jobInsertionLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[1]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 3 : 
-                if(swapLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[2]++;
-                    k = 1;
+                if (enable_ls3) {
+                    if(swapLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[2]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 4 :
-                if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
+                if (enable_ls4) {
+                    if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[3]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 5 :
-                if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
+                if (enable_ls5) {
+                    if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[3]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
         }
     }
     return true;
@@ -168,45 +258,75 @@ bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
         currentBest = evaluationFunction();
         switch(k) {
             case 1 :
-                if(jobExchangeLocalSearchCritSim(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[0]++;
-                    k = 1;
+                if (enable_ls1) {
+                    if(jobExchangeLocalSearchCritSim(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[0]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 2 :
-                if(jobInsertionLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[1]++;
-                    k = 1;
+                if (enable_ls2) {
+                    if(jobInsertionLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[1]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 3 : 
-                if(swapLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[2]++;
-                    k = 1;
+                if (enable_ls3) {
+                    if(swapLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[2]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 4 :
-                if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
+                if (enable_ls4) {
+                    if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[3]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
             case 5 :
-                if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
+                if (enable_ls5) {
+                    if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
+                        summary.localSearchImprovements[3]++;
+                        k = 1;
+                    }
+                    else
+                        k++;
+                    break;
                 }
-                else
+                else {
                     k++;
-                break;
+                    break;
+                }
         }
     }
     return true;

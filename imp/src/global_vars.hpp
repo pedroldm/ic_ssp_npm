@@ -27,6 +27,7 @@ using namespace std::chrono;
 inline int runs = 1, objective, maxIterations = 1000, flowtimeSum, flowtimeAux, iterations, objectives[] = {1 /*TS*/, 2/*Makespan*/, 3/*Flowtime*/};
 inline int machineCount, toolCount, jobCount, currentBest, best, beforeSwap1, beforeSwap2, maxTime = 3600;
 inline float disturbSize = 0.05, oneBlockPercentage = 0.25, similarityPercentage = 0.70, criticJobPercentage = 0.75;
+inline bool enable_ls1 = true, enable_ls2 = true, enable_ls3 = true, enable_ls4 = true, enable_ls5 = true;
 inline duration<double> time_span;
 inline string instance, inputFileName, ans;
 inline ifstream fpIndex;
