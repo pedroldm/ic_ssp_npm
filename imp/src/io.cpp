@@ -23,11 +23,23 @@ Instance singleRun(string inputFileName, ofstream& outputFile, int run, int obje
 	runningTime = time_span.count();											
 
     npmJobAssignement = bestSolution;
-	printSolution(inputFileName, runningTime, objective, run, cout);		
-	printSolution(inputFileName, runningTime, objective, run, outputFile);		
+	//printSolution(inputFileName, runningTime, objective, run, cout);		
+	//printSolution(inputFileName, runningTime, objective, run, outputFile);	
 
-    Instance ins(bestSolution, GPCA(), makespanEvaluation(), flowtimeEvaluation(), improvements, runningTime, iterations, timeTracking);
-    return ins;
+    switch (objective){
+        case 1:
+            cout << GPCA();
+            break;
+        case 2:
+            cout << makespanEvaluation();
+            break;
+        case 3:
+            cout << flowtimeEvaluation();
+            break;
+    }
+
+    //Instance ins(bestSolution, GPCA(), makespanEvaluation(), flowtimeEvaluation(), improvements, runningTime, iterations, timeTracking);
+    //return ins;
 }
 
 void readProblem(string fileName) {
@@ -178,68 +190,66 @@ void termination() {
 
 template <typename S>
 void printSolution(string inputFileName, double runningTime, int objective, int run, S &s) {
-    int totalToolSwitches = GPCA(), makespan = makespanEvaluation(), flowtime = flowtimeEvaluation();
-
-    s << "RUN : " << run << " - " << inputFileName << "\n\n";
-    for(int i = 0 ; i < machineCount ; i++) {
-        s << "- MACHINE [" << i << "]" << "\n\n";
-
-        if(PRINT_MATRIX) {
-            for(int j = 0 ; j < toolCount ; j++) {
-                for(int k : bestSolution[i]) {
-                    s << toolsRequirements[j][k] << " ";
-                }
-                s << endl;
-            }
-            s << endl;
-        }
-
-        s << "JOBS " << bestSolution[i];
-        s << "TOOL SWITCHES : " << npmCurrentToolSwitches[i] << endl;
-        s << "MAKESPAN : " << npmCurrentMakespan[i] << "\n\n";
-    }
-
-    s << "# -------------------------- #" << endl << endl;
-    s << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
-    s << "--- HIGHEST MAKESPAN : " << makespan << endl;
-    s << "--- TOTAL FLOWTIME : " << flowtime << endl;
-    s << "--- COMPLETED ITERATIONS : " << --iterations << endl;
-    s << "--- RUNNING TIME : " << runningTime << endl;
-    s << "--- IMPROVEMENT HISTORY : " << improvements;
-    s << "--- TIME TRACKING : " << timeTracking << endl;
+    //s << "RUN : " << run << " - " << inputFileName << "\n\n";
+    //for(int i = 0 ; i < machineCount ; i++) {
+    //    s << "- MACHINE [" << i << "]" << "\n\n";
+//
+    //    if(PRINT_MATRIX) {
+    //        for(int j = 0 ; j < toolCount ; j++) {
+    //            for(int k : bestSolution[i]) {
+    //                s << toolsRequirements[j][k] << " ";
+    //            }
+    //            s << endl;
+    //        }
+    //        s << endl;
+    //    }
+//
+    //    s << "JOBS " << bestSolution[i];
+    //    s << "TOOL SWITCHES : " << npmCurrentToolSwitches[i] << endl;
+    //    s << "MAKESPAN : " << npmCurrentMakespan[i] << "\n\n";
+    //}
+//
+    //s << "# -------------------------- #" << endl << endl;
+    //s << "--- TOTAL TOOL SWITCHES : " << totalToolSwitches << endl;
+    //s << "--- HIGHEST MAKESPAN : " << makespan << endl;
+    //s << "--- TOTAL FLOWTIME : " << flowtime << endl;
+    //s << "--- COMPLETED ITERATIONS : " << --iterations << endl;
+    //s << "--- RUNNING TIME : " << runningTime << endl;
+    //s << "--- IMPROVEMENT HISTORY : " << improvements;
+    //s << "--- TIME TRACKING : " << timeTracking << endl;
 }
 
 void printSummary(string input) {
-    cout << "Input: " << input << endl;
-    cout << "Objective: " << objective << endl;
-    cout << "# -------------------------------- #" << endl;
-    cout << "Average Bests TS: " << (int)round(summary.getBestsMean(1)) << " (" << fixed << setprecision(2) << summary.getBestsMean(1) << ")" << endl;
-    cout << "Mean TS: " << (int)round(summary.getGeneralMean(1)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(1) << ")" << endl;
-    cout << "Average Bests Makespan: " << (int)round(summary.getBestsMean(2)) << " (" << fixed << setprecision(2) << summary.getBestsMean(2) << ")" << endl;
-    cout << "Mean Makespan: " << (int)round(summary.getGeneralMean(2)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(2) << ")" << endl;
-    cout << "Average Bests Flowtime: " << (int)round(summary.getBestsMean(3)) << " (" << fixed << setprecision(2) << summary.getBestsMean(3) << ")" << endl;
-    cout << "Mean Flowtime: " << (int)round(summary.getGeneralMean(3)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(3) << ")" << endl;
-    cout << "# -------------------------------- #" << endl;
-    cout << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
-    cout << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
-    cout << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
-    cout << "# -------------------------------- #" << endl;
-    cout << "Mean Execution Time : " << fixed << setprecision(2) << summary.getMeanExecutionTime() << endl;
-    cout << "Trajectory : " << summary.getTrajectoryData();
-    cout << "LS Improvements : " << summary.localSearchImprovements;
-    if(outputFile.is_open()) {
-        outputFile << "--------- SUMMARY ---------" << endl << endl;
-        outputFile << "Input: " << input << endl;
-        outputFile << "Objective: " << objective << endl;
-        outputFile << "Average TS: " << (int)round(summary.getBestsMean(1)) << " (" << fixed << setprecision(2) << summary.getBestsMean(1) << ")" << endl;
-        outputFile << "Average Makespan: " << (int)round(summary.getBestsMean(2)) << " (" << fixed << setprecision(2) << summary.getBestsMean(2) << ")" << endl;
-        outputFile << "Average Flowtime: " << (int)round(summary.getBestsMean(3)) << " (" << fixed << setprecision(2) << summary.getBestsMean(3) << ")" << endl;
-        outputFile << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
-        outputFile << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
-        outputFile << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
-        outputFile << "Trajectory : " << summary.getTrajectoryData();
-        outputFile << "LS Improvements : " << summary.localSearchImprovements;
-    }
+    //cout << "Input: " << input << endl;
+    //cout << "Objective: " << objective << endl;
+    //cout << "# -------------------------------- #" << endl;
+    //cout << "Average Bests TS: " << (int)round(summary.getBestsMean(1)) << " (" << fixed << setprecision(2) << summary.getBestsMean(1) << ")" << endl;
+    //cout << "Mean TS: " << (int)round(summary.getGeneralMean(1)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(1) << ")" << endl;
+    //cout << "Average Bests Makespan: " << (int)round(summary.getBestsMean(2)) << " (" << fixed << setprecision(2) << summary.getBestsMean(2) << ")" << endl;
+    //cout << "Mean Makespan: " << (int)round(summary.getGeneralMean(2)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(2) << ")" << endl;
+    //cout << "Average Bests Flowtime: " << (int)round(summary.getBestsMean(3)) << " (" << fixed << setprecision(2) << summary.getBestsMean(3) << ")" << endl;
+    //cout << "Mean Flowtime: " << (int)round(summary.getGeneralMean(3)) << " (" << fixed << setprecision(2) << summary.getGeneralMean(3) << ")" << endl;
+    //cout << "# -------------------------------- #" << endl;
+    //cout << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
+    //cout << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
+    //cout << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
+    //cout << "# -------------------------------- #" << endl;
+    //cout << "Mean Execution Time : " << fixed << setprecision(2) << summary.getMeanExecutionTime() << endl;
+    //cout << "Trajectory : " << summary.getTrajectoryData();
+    //cout << "LS Improvements : " << summary.localSearchImprovements;
+    //if(outputFile.is_open()) {
+    //    outputFile << "--------- SUMMARY ---------" << endl << endl;
+    //    outputFile << "Input: " << input << endl;
+    //    outputFile << "Objective: " << objective << endl;
+    //    outputFile << "Average TS: " << (int)round(summary.getBestsMean(1)) << " (" << fixed << setprecision(2) << summary.getBestsMean(1) << ")" << endl;
+    //    outputFile << "Average Makespan: " << (int)round(summary.getBestsMean(2)) << " (" << fixed << setprecision(2) << summary.getBestsMean(2) << ")" << endl;
+    //    outputFile << "Average Flowtime: " << (int)round(summary.getBestsMean(3)) << " (" << fixed << setprecision(2) << summary.getBestsMean(3) << ")" << endl;
+    //    outputFile << "Mean Standard Deviation TS: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(1) << endl;
+    //    outputFile << "Mean Standard Deviation Makespan: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(2) << endl;
+    //    outputFile << "Mean Standard Deviation Flowtime: " << fixed << setprecision(2) << summary.getMeanStandardDeviation(3) << endl;
+    //    outputFile << "Trajectory : " << summary.getTrajectoryData();
+    //    outputFile << "LS Improvements : " << summary.localSearchImprovements;
+    //}
 }
 
 void parseArguments(vector<string> arguments) {
