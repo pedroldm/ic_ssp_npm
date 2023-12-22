@@ -153,7 +153,7 @@ bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 6) {
+    while (k < 5) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -184,14 +184,6 @@ bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
                     k++;
                 break;
             case 4 :
-                if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
-                }
-                else
-                    k++;
-                break;
-            case 5 :
                 if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
                     summary.localSearchImprovements[3]++;
                     k = 1;
