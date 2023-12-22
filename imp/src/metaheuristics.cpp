@@ -21,8 +21,7 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
             if (dis(gen) < criticJobPercentage)
-                if(!criticJobDisturb())
-                    jobInsertionDisturb();
+                criticJobDisturb();
             else
                 jobInsertionDisturb();
         }
@@ -59,8 +58,7 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
             if (dis(gen) < criticJobPercentage)
-                if(!criticJobDisturb())
-                    jobInsertionDisturb();
+                criticJobDisturb();
             else
                 jobInsertionDisturb();
         }
@@ -184,7 +182,7 @@ int minTSJ() {
     return get<1>(*m.begin());
 }
 
-bool criticJobDisturb() {
+void criticJobDisturb() {
     vector<set<tuple<int,int>>> cJ = criticJobEvaluation();
     for(int i = 0 ; i < machineCount ; i++) {
         npmCurrentMakespan[i] = npmCurrentToolSwitches[i] * npmSwitchCost[i];
@@ -198,17 +196,13 @@ bool criticJobDisturb() {
     int criticalMachine = distance(npmCurrentMakespan.begin(),max_element(npmCurrentMakespan.begin(), npmCurrentMakespan.end()));
     tuple<int, int> jobToRemove = *cJ[criticalMachine].rbegin();
     int jobToReassign = npmJobAssignement[criticalMachine][get<1>(jobToRemove)];
-    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));   
+    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));
     vector<int> otherMachines;
-    for(int i = 0 ; i < machineCount ; i++){
+    for(int i = 0 ; i < machineCount ; i++)
         if (i != criticalMachine && jobEligibility[i][jobToReassign])
             otherMachines.push_back(i);
-    }
-    if (otherMachines.empty())
-        return false;
     shuffle(otherMachines.begin(), otherMachines.end(), rng);
     npmJobAssignement[otherMachines[0]].push_back(jobToReassign);
-    return true;
 }
 
 void updateBestSolution(function<int(void)> evaluationFunction) {
