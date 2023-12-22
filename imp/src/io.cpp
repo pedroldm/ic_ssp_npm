@@ -261,6 +261,8 @@ void parseArguments(vector<string> arguments) {
             criticJobPercentage = stof(arguments[i + 1]);
         else if (arguments[i]=="--disturb_size")
             disturbSize = stof(arguments[i + 1]);
+        else if (arguments[i]=="--one_block_percentage")
+            oneBlockPercentage = stof(arguments[i + 1]);
         else if (arguments[i]=="--input") {
             inputFileName = arguments[i + 1];
             fpIndex.open(arguments[i + 1]);
