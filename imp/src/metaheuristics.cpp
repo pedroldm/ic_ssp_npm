@@ -196,9 +196,11 @@ bool criticJobDisturb() {
     vector<int> mv(machineCount);
 
     int criticalMachine = distance(npmCurrentMakespan.begin(),max_element(npmCurrentMakespan.begin(), npmCurrentMakespan.end()));
+    if (cJ[criticalMachine].empty())
+        return false;
     tuple<int, int> jobToRemove = *cJ[criticalMachine].rbegin();
     int jobToReassign = npmJobAssignement[criticalMachine][get<1>(jobToRemove)];
-    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));   
+    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));
     vector<int> otherMachines;
     for(int i = 0 ; i < machineCount ; i++){
         if (i != criticalMachine && jobEligibility[i][jobToReassign])
