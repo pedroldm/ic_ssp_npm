@@ -2,7 +2,7 @@
 
 bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 4) {
+    while (k != 5) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -32,6 +32,15 @@ bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 else
                     k++;
                 break;
+            case 4 :
+                if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest, false)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            
         }
     }
     return true;
@@ -39,7 +48,7 @@ bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 4) {
+    while (k != 5) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -69,6 +78,14 @@ bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
                 else
                     k++;
                 break;
+            case 4 :
+                if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest, false)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
         }
     }
     return true;
@@ -76,7 +93,7 @@ bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
 
 bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k < 4) {
+    while (k < 5) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -106,6 +123,14 @@ bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 else
                     k++;
                 break;
+            case 4 :
+                if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest, true)) {
+                    summary.localSearchImprovements[3]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
         }
     }
     return true;
@@ -113,7 +138,7 @@ bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k < 4) {
+    while (k < 5) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -138,6 +163,14 @@ bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
             case 3 : 
                 if(swapLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
                     summary.localSearchImprovements[2]++;
+                    k = 1;
+                }
+                else
+                    k++;
+                break;
+            case 4 :
+                if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest, true)) {
+                    summary.localSearchImprovements[3]++;
                     k = 1;
                 }
                 else
@@ -342,8 +375,9 @@ bool jobExchangeLocalSearchFullSim(function<int(void)> evaluationFunction, vecto
     return false;
 }
 
-bool twoOptLocalSearch(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {
-    for(int i = 0 ; i < machineCount ; i++) {
+bool twoOptLocalSearch(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest, bool onlyCriticalMachine) {
+    if (onlyCriticalMachine) {
+        int i = distance(npmCurrentMakespan.begin(),max_element(npmCurrentMakespan.begin(), npmCurrentMakespan.end()));
         mI = {i};
         for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
             for (int k = j + 3 ; k < (int)npmJobAssignement[i].size() ; k++) {
@@ -358,6 +392,25 @@ bool twoOptLocalSearch(function<int(void)> evaluationFunction, vector<int> &eval
                     evaluationVector[i] = beforeSwap1;
                 }
             }
+        }   
+    }
+    else {
+        for(int i = 0 ; i < machineCount ; i++) {
+            mI = {i};
+            for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
+                for (int k = j + 3 ; k < (int)npmJobAssignement[i].size() ; k++) {
+                    beforeSwap1 = evaluationVector[i];
+                    reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
+                    if(evaluationFunction() < currentBest) {
+                        mI.clear();
+                        return true;
+                    }
+                    else {
+                        reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
+                        evaluationVector[i] = beforeSwap1;
+                    }
+                }
+            }
         }
     }
 
@@ -365,8 +418,9 @@ bool twoOptLocalSearch(function<int(void)> evaluationFunction, vector<int> &eval
     return false;
 }
 
-bool twoOptLocalSearchSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest) {
-    for(int i = 0 ; i < machineCount ; i++) {
+bool twoOptLocalSearchSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector, int currentBest, bool onlyCriticalMachine) {
+    if (onlyCriticalMachine) {
+        int i = distance(npmCurrentMakespan.begin(),max_element(npmCurrentMakespan.begin(), npmCurrentMakespan.end()));
         mI = {i};
         for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
             for (int k = j + 3 ; k < (int)npmJobAssignement[i].size() ; k++) {
@@ -385,6 +439,28 @@ bool twoOptLocalSearchSim(function<int(void)> evaluationFunction, vector<int> &e
             }
         }
     }
+    else {
+        for(int i = 0 ; i < machineCount ; i++) {
+            mI = {i};
+            for(int j = 0 ; j < (int)npmJobAssignement[i].size() ; j++) {
+                for (int k = j + 3 ; k < (int)npmJobAssignement[i].size() ; k++) {
+                    if(!similarityMatrix[j][k])
+                        continue;
+                    beforeSwap1 = evaluationVector[i];
+                    reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
+                    if(evaluationFunction() < currentBest) {
+                        mI.clear();
+                        return true;
+                    }
+                    else {
+                        reverse(npmJobAssignement[i].begin() + j, npmJobAssignement[i].end() - k + 1);
+                        evaluationVector[i] = beforeSwap1;
+                    }
+                }
+            }
+        }
+    }
+
 
     mI.clear();
     return false;
