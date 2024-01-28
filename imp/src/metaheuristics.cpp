@@ -20,9 +20,10 @@ void ILSFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     while(iterations++ < maxIterations && stillHaveTime) {
         npmJobAssignement = bestSolution;
         for(int i = 0 ; i < ceil(disturbSize * jobCount) ; i++) {
-            if (dis(gen) < criticJobPercentage)
+            if (dis(gen) < criticJobPercentage) {
                 if(!criticJobDisturb())
                     jobInsertionDisturb();
+            }
             else
                 jobInsertionDisturb();
         }
@@ -87,7 +88,7 @@ void jobInsertionDisturb() {
     random_device rd;
     mt19937 gen(rd());
     mt19937 rng(random_device{}());
-    vector<int>otherMachines(machineCount);
+    vector<int>otherMachines;
     for(int i = 0 ; i < machineCount ; i++)
         if (i != criticalMachine)
             otherMachines.push_back(i);
@@ -99,7 +100,7 @@ void jobInsertionDisturb() {
 
     for(int i = 0 ; i < (int) otherMachines.size() ; i++) {
         if(jobEligibility[i][jobToReassign]) {
-            uniform_int_distribution<> destDistribution(0, npmJobAssignement[i].size());
+            uniform_int_distribution<> destDistribution(0, npmJobAssignement[i].size() - 1);
             int destRandomIndex = destDistribution(gen);
             npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + randomIndex);
             npmJobAssignement[i].insert(npmJobAssignement[i].begin() + destRandomIndex, jobToReassign);
