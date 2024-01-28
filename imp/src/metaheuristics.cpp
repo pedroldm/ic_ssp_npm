@@ -200,7 +200,6 @@ bool criticJobDisturb() {
         return false;
     tuple<int, int> jobToRemove = *cJ[criticalMachine].rbegin();
     int jobToReassign = npmJobAssignement[criticalMachine][get<1>(jobToRemove)];
-    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));
     vector<int> otherMachines;
     for(int i = 0 ; i < machineCount ; i++){
         if (i != criticalMachine && jobEligibility[i][jobToReassign])
@@ -208,6 +207,7 @@ bool criticJobDisturb() {
     }
     if (otherMachines.empty())
         return false;
+    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));
     shuffle(otherMachines.begin(), otherMachines.end(), rng);
     npmJobAssignement[otherMachines[0]].push_back(jobToReassign);
     return true;
