@@ -2,7 +2,7 @@
 
 bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 6) {
+    while (k != 4) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -32,22 +32,6 @@ bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 else
                     k++;
                 break;
-            case 4 :
-                if(twoOptLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
-                }
-                else
-                    k++;
-                break;
-            case 5 :
-                if(oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
-                }
-                else
-                    k++;
-                break;
         }
     }
     return true;
@@ -55,7 +39,7 @@ bool VNDFull(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k != 6) {
+    while (k != 4) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -85,22 +69,6 @@ bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
                 else
                     k++;
                 break;
-            case 4 :
-                if(twoOptLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
-                }
-                else
-                    k++;
-                break;
-            case 5 :
-                if(oneBlockLocalSearch(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
-                }
-                else
-                    k++;
-                break;
         }
     }
     return true;
@@ -108,7 +76,7 @@ bool VNDFullSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
 
 bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k < 5) {
+    while (k < 4) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -138,14 +106,6 @@ bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
                 else
                     k++;
                 break;
-            case 4 :
-                if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
-                    k = 1;
-                }
-                else
-                    k++;
-                break;
         }
     }
     return true;
@@ -153,7 +113,7 @@ bool VNDCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
 
 bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationVector) {
     int k = 1;
-    while (k < 5) {
+    while (k < 4) {
         time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
         if(time_span.count() >= maxTime)
             return false;
@@ -178,14 +138,6 @@ bool VNDCritSim(function<int(void)> evaluationFunction, vector<int> &evaluationV
             case 3 : 
                 if(swapLocalSearchSim(evaluationFunction, evaluationVector, currentBest)) {
                     summary.localSearchImprovements[2]++;
-                    k = 1;
-                }
-                else
-                    k++;
-                break;
-            case 4 :
-                if(oneBlockLocalSearchCrit(evaluationFunction, evaluationVector, currentBest)) {
-                    summary.localSearchImprovements[3]++;
                     k = 1;
                 }
                 else

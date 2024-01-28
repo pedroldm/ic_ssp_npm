@@ -1,5 +1,4 @@
 #include "io.hpp"
-
 Instance singleRun(string inputFileName, ofstream& outputFile, int run, int objective) {
     double runningTime;
     readProblem(inputFileName);

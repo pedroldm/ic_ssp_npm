@@ -45,12 +45,11 @@ void ILSCrit(function<int(void)> evaluationFunction, vector<int> &evaluationVect
     constructSimilarityMatrix();
     constructInitialSolution();
     improvements.push_back(make_tuple(0, evaluationFunction()));
-    VNDCrit(evaluationFunction, evaluationVector);
+    bool stillHaveTime = VNDCrit(evaluationFunction, evaluationVector);
     int it = evaluationFunction();
     timeTracking[0] = it;
     improvements.push_back(make_tuple(1, it));
     updateBestSolution(evaluationFunction);
-    bool stillHaveTime = true;
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.0, 1.0);
@@ -97,14 +96,14 @@ void jobInsertionDisturb() {
     uniform_int_distribution<> distribution(0, npmJobAssignement[criticalMachine].size() - 1);
     int randomIndex = distribution(gen);
     int jobToReassign = npmJobAssignement[criticalMachine][randomIndex];
-    npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + randomIndex);
 
     for(int i = 0 ; i < (int) otherMachines.size() ; i++) {
         if(jobEligibility[i][jobToReassign]) {
             uniform_int_distribution<> destDistribution(0, npmJobAssignement[i].size());
             int destRandomIndex = destDistribution(gen);
+            npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + randomIndex);
             npmJobAssignement[i].insert(npmJobAssignement[i].begin() + destRandomIndex, jobToReassign);
-            return;
+            break;
         }
     } 
 }
@@ -208,8 +207,21 @@ bool criticJobDisturb() {
     if (otherMachines.empty())
         return false;
     npmJobAssignement[criticalMachine].erase(npmJobAssignement[criticalMachine].begin() + get<1>(jobToRemove));
-    shuffle(otherMachines.begin(), otherMachines.end(), rng);
-    npmJobAssignement[otherMachines[0]].push_back(jobToReassign);
+    
+    uniform_real_distribution<double> distribution(0.0, 1.0);
+    double randomValue = distribution(rng);
+    if (randomValue <= lowestMakespanPercentage){
+        vector<int>makespanSubset;
+        for (const auto& m: otherMachines){
+            makespanSubset.push_back(npmCurrentMakespan[m]);
+        }
+        int lowestMakespan = distance(makespanSubset.begin(),min_element(makespanSubset.begin(), makespanSubset.end()));
+        npmJobAssignement[lowestMakespan].push_back(jobToReassign);
+    } else{
+        shuffle(otherMachines.begin(), otherMachines.end(), rng);
+        npmJobAssignement[otherMachines[0]].push_back(jobToReassign);
+    }
+
     return true;
 }
 
